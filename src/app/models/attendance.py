@@ -23,3 +23,5 @@ class Attendance(Base):
     actual_attendance: Mapped[bool]
 
     notes: Mapped[str]
+    # TODO: switch to holding a list of user ids for one practice id, 
+    # when needed crossreference with current team members to avoid displaying non member users
