@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from src.app.models import Base
+from src.app import models
 
 load_dotenv()
 
@@ -38,7 +38,7 @@ if config.config_file_name is not None:
 # base_class = getattr(base_module, "Base")
 # target_metadata = base_class.metadata
 # from src.app.models.common.base import Base
-target_metadata = Base.metadata
+target_metadata = models.Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
