@@ -13,8 +13,3 @@ class User(IdBearer, Base):
     first_name: Mapped[str]
     last_name: Mapped[str]
     username: Mapped[str]
-
-    owned_teams: Mapped[list["Team"]] = relationship(back_populates="owner")
-    coached_teams: Mapped[list["Team"]] = relationship(back_populates="coaches")
-    membership_teams: Mapped[list["Team"]] = relationship(back_populates="players")
-
