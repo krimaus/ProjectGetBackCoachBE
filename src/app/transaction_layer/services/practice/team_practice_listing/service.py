@@ -5,7 +5,7 @@ import uuid
 from sqlalchemy import select
 
 from app.db import get_session
-from app.models import Practice, Team
+from app.db_layer.orm_models import Practice, Team
 
 
 @dataclasses.dataclass

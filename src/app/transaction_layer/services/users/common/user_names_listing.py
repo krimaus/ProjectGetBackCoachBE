@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.db import get_session
-from app.models import Team
+from app.orm_models import Team
 
 
 @dataclasses.dataclass

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from starlette import status
 
-from app.services.teams.listing.service import TeamsNamesListing
+from app.transaction_layer.services.teams.listing.service import TeamsNamesListing
 
 teams_router = APIRouter(prefix="/teams", tags=["teams"])
 

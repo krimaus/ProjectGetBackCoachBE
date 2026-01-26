@@ -4,11 +4,10 @@ import uuid
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Enum
 
-from .common import Base
 from .enums import UserRoleEnum
 
-if typing.TYPE_CHECKING:
-    from app.models.team import Team
+from .common import Base
+
 
 
 class UserRole(Base):

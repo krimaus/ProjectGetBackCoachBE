@@ -4,8 +4,8 @@ from uuid import UUID
 from fastapi import APIRouter
 from starlette import status
 
-from app.services.practice.practice_attendance_listing.service import TeamAttendanceListing
-from app.services.practice.team_practice_listing.service import TeamPracticeListing
+from app.transaction_layer.services.practice.practice_attendance_listing.service import TeamAttendanceListing
+from app.transaction_layer.services.practice.team_practice_listing.service import TeamPracticeListing
 
 practice_router = APIRouter(prefix="/practice", tags=["practice"])
 

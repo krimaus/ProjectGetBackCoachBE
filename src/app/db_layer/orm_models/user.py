@@ -1,11 +1,8 @@
 import typing
 
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy.orm import Mapped
 
 from .common import Base, IdBearer
-
-if typing.TYPE_CHECKING:
-    from app.models.team import Team
 
 class User(IdBearer, Base):
     __tablename__ = 'user'
