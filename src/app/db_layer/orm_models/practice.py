@@ -4,7 +4,6 @@ import uuid
 from sqlalchemy import TIMESTAMP
 from sqlalchemy.orm import Mapped, mapped_column
 
-from . import Team
 from .common import Base, IdBearer
 
 

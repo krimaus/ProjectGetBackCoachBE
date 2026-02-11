@@ -1,5 +1,3 @@
-import typing
-
 from sqlalchemy.orm import Mapped
 
 from .common import Base, IdBearer

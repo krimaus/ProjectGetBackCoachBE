@@ -1,4 +1,3 @@
-import typing
 import uuid
 
 from sqlalchemy.orm import Mapped, mapped_column
