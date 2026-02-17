@@ -1,1 +1,1 @@
-from .attendance import AttendanceEntry
+from .practice import PracticeItem, TeamPracticeListingItem

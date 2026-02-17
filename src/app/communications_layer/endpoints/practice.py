@@ -1,28 +1,25 @@
-from datetime import datetime
+import datetime as dt
 from uuid import UUID
 
 from fastapi import APIRouter
 from starlette import status
 
-from app.transaction_layer.services.practice.practice_attendance_listing.service import TeamAttendanceListing
-from app.transaction_layer.services.practice.team_practice_listing.service import TeamPracticeListing
+from transaction_layer.services.practice.team_practice_listing import get_team_practices
 
 practice_router = APIRouter(prefix="/practice", tags=["practice"])
 
 @practice_router.get(
-    "/{team_id}",
+    "/schedule/{team_id}",
     status_code=status.HTTP_200_OK,
 )
 async def get_team_practice(
         team_id: UUID,
-        time_from: datetime | None = None,
-        time_to: datetime | None = None,
+        time_from: dt.datetime | None = None,
+        time_to: dt.datetime | None = None,
 ):
-    return await TeamPracticeListing.service(team_id, time_from, time_to)
-
-@practice_router.get(
-    "/{team_id}/attendance",
-    status_code=status.HTTP_200_OK,
-)
-async def get_team_practice_attendance(team_id: UUID):
-    return await TeamAttendanceListing.service(team_id)
+    if time_from is None:
+        time_from = dt.datetime.now()
+    if time_to is None:
+        time_to = time_from + dt.timedelta(days=7)
+        
+    return await get_team_practices(team_id, time_from, time_to)

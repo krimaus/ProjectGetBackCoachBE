@@ -16,3 +16,4 @@ app.add_middleware(
 app.include_router(endpoints.users.users_router)
 app.include_router(endpoints.practice_router)
 app.include_router(endpoints.teams_router)
+app.include_router(endpoints.attendance_router)
