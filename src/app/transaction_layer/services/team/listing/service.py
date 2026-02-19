@@ -1,52 +1,28 @@
-import dataclasses
 import uuid
 
-# from sqlalchemy import select
+from app.db_layer.orm_models.team import Team
+from app.transaction_layer.pydantic_models.team import TeamItem
 
-# from app.db import get_session
-# from app.orm_models import Team
+from sqlalchemy import select
+
+from app.db import get_session
 
 
-# @dataclasses.dataclass
-# class OwnerItem:
-#     id: uuid.UUID
-#     username: str
+async def get_team_names(cls):
+    async with await get_session() as session:
+    
+        stmt = (
+            select(Team.id, Team.name)
+            .order_by(Team.name)
+        )
+        
+        result = await session.execute(stmt)
+        rows = result.all()
 
-@dataclasses.dataclass
-class TeamsListingItem:
-    id: uuid.UUID
-    name: str
-    # owner: OwnerItem
-
-class TeamsNamesListing:
-
-    @classmethod
-    async def service(cls):
-        # stmt = (
-        #     select(Team.id, Team.name).order_by(Team.name)
-        # )
-        #
-        # session = await get_session()
-        # result = await session.execute(stmt)
-        #
-        # items = tuple(
-        #     TeamsListingItem(**item)
-        #     for item in result.mappings().fetchall()
-        # )
-        #
-        # return items
-
-        return [
-            TeamsListingItem(
-                id=uuid.uuid4(),
-                name="Team Name 1"
-            ),
-            TeamsListingItem(
-                id=uuid.uuid4(),
-                name="Team Name 2"
-            ),
-            TeamsListingItem(
-                id=uuid.uuid4(),
-                name="Team Name 3"
-            )
-        ]
+    return [
+        TeamItem(
+            id=id,
+            name=name
+        )
+        for id, name in rows
+    ]
