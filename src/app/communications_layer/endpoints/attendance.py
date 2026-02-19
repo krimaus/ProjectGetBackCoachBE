@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter
 from starlette import status
 
-from transaction_layer.services.attendance.attendance_listing.service import get_attendance_grid
+from transaction_layer.services.attendance.attendance_grid.service import get_attendance_grid
 
 attendance_router = APIRouter(prefix="/attendance", tags=["attendance"])
 
@@ -12,7 +12,7 @@ attendance_router = APIRouter(prefix="/attendance", tags=["attendance"])
     "/{team_id}/grid",
     status_code=status.HTTP_200_OK,
 )
-async def get_team_practice_attendance_grid(
+async def get_team_attendance_grid(
     team_id: UUID,
     time_from: dt.datetime | None = None,
     time_to: dt.datetime | None = None,
