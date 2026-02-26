@@ -5,7 +5,7 @@ from sqlalchemy import select
 from app.db import get_session
 from app.db_layer.orm_models.user import User
 from app.db_layer.orm_models.user_role import UserRole
-from app.transaction_layer.pydantic_models.user import UserFullName, UserList
+from app.service_layer.pydantic_models.user import UserFullName, UserList
 
 
 async def get_team_member_list(team_id: uuid.uuid4):

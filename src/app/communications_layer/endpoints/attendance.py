@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter
 from starlette import status
 
-from transaction_layer.services.attendance.attendance_grid.service import get_attendance_grid
+from service_layer.services.attendance.attendance_grid.service import get_attendance_grid
 
 attendance_router = APIRouter(prefix="/attendance", tags=["attendance"])
 

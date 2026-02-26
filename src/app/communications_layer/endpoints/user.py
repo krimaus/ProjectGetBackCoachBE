@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter
 from starlette import status
 
-from app.transaction_layer.services.user.team_members_listing.service import get_team_member_list
+from app.service_layer.services.user.team_members_listing.service import get_team_member_list
 
 
 users_router = APIRouter(prefix="/users", tags=["users"])
