@@ -5,23 +5,23 @@ from app.db_layer.orm_models import Practice
 from collections import defaultdict
 from sqlalchemy import select
 from pydantic_models.practice import PracticeItem, TeamPracticeListingItem
+from sqlalchemy.ext.asyncio import AsyncSession
     
 # TODO: error handling 
-async def get_team_practices(team_id: uuid.uuid4, time_from: dt.datetime, time_to: dt.datetime):
-    async with await get_session() as session:
+async def get_team_practices(session: AsyncSession, team_id: uuid.uuid4, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
 
-        stmt = (
-            select(Practice)
-            .where(
-                Practice.team_id == team_id,
-                Practice.start_time >= time_from,
-                Practice.end_time <= time_to,
-            )
-            .order_by(Practice.start_time)
+    stmt = (
+        select(Practice)
+        .where(
+            Practice.team_id == team_id,
+            Practice.start_time >= time_from,
+            Practice.end_time <= time_to,
         )
+        .order_by(Practice.start_time)
+    )
 
-        result = await session.execute(stmt)
-        practices = result.scalars().all()
+    result = await session.execute(stmt)
+    practices = result.scalars().all()
 
     practice_by_date = defaultdict(list)
     for practice in practices:

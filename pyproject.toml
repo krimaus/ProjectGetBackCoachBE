@@ -16,6 +16,7 @@ alembic = "^1.13.3"
 python-dotenv = "^1.0.1"
 psycopg2 = "^2.9.10"
 asyncpg = "^0.30.0"
+httpx = "^0.28.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -29,4 +30,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests]
+testpaths = ["tests"]

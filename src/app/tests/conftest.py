@@ -42,9 +42,40 @@ def create_test_database():
 
     conn.close()
     
+def drop_test_database():
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user=TEST_DB_USER,
+        password=TEST_DB_PASSWORD,
+        host=TEST_DB_HOST,
+        port=TEST_DB_PORT,
+        autocommit=True,
+    )
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE datname = %s
+            AND pid <> pg_backend_pid()
+            """,
+            (TEST_DB_NAME,),
+        )
+
+        cur.execute(
+            psycopg2.sql.SQL("DROP DATABASE IF EXISTS {}").format(
+                psycopg2.sql.Identifier(TEST_DB_NAME)
+            )
+        )
+
+    conn.close()
+    
 @pytest.fixture(scope="session")
 def setup_test_db():
     create_test_database()
+    yield
+    drop_test_database()
 
 @pytest.fixture(scope="session")
 async def engine(setup_test_db):
