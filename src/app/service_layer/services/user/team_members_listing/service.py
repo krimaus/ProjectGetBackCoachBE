@@ -1,3 +1,4 @@
+from typing import List
 import uuid
 
 from sqlalchemy import select
@@ -5,10 +6,10 @@ from sqlalchemy import select
 from app.db import get_session
 from app.db_layer.orm_models.user import User
 from app.db_layer.orm_models.user_role import UserRole
-from app.service_layer.pydantic_models.user import UserFullName, UserList
+from app.service_layer.pydantic_models.user import UserFullName
 
 
-async def get_team_member_list(team_id: uuid.uuid4):
+async def get_team_member_list(team_id: uuid.uuid4) -> List[UserFullName]:
     async with await get_session() as session:
         
         stmt = (
@@ -23,8 +24,7 @@ async def get_team_member_list(team_id: uuid.uuid4):
         result = await session.execute(stmt)
         members = result.scalars().all()
         
-    return UserList(
-        user_list=[
+    return [
             UserFullName(
                 id=m.id,
                 first_name=m.id,
@@ -32,4 +32,3 @@ async def get_team_member_list(team_id: uuid.uuid4):
             )
             for m in members
         ]
-    )

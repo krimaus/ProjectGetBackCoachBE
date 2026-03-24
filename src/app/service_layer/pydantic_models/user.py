@@ -15,6 +15,6 @@ class UserFullName(BaseModel):
     first_name: str
     last_name: str
     
-class UserList(BaseModel):
-    # team_id: UUID4
-    user_list: list[UserFullName]
+# class UserList(BaseModel):
+#     team_id: UUID4
+#     user_list: list[UserFullName]

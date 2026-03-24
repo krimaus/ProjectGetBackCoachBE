@@ -42,7 +42,7 @@ async def test_get_team_practices(async_session):
     async_session.add_all([practice1, practice2, practice3])
     await async_session.commit()
     
-    result = get_team_practices(team_id=team1.id, time_from=datetime(2026, 3, 13, 13, 30, 0, tzinfo=timezone.UTC), time_to=datetime(2026, 3, 12, 17, 30, 0, tzinfo=timezone.UTC))
+    result = await get_team_practices(team_id=team1.id, time_from=datetime(2026, 3, 13, 13, 30, 0, tzinfo=timezone.UTC), time_to=datetime(2026, 3, 12, 17, 30, 0, tzinfo=timezone.UTC))
     
     assert len(result) == 2
     
