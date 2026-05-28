@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import endpoints
+from app.communications_layer import endpoints
 
 app = FastAPI()
 
@@ -13,7 +13,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-app.include_router(endpoints.users.users_router)
+app.include_router(endpoints.users_router)
 app.include_router(endpoints.practice_router)
 app.include_router(endpoints.teams_router)
 app.include_router(endpoints.attendance_router)

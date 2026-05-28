@@ -6,7 +6,7 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from service_layer.services.attendance.attendance_grid.service import get_attendance_grid
+from app.service_layer.services import get_attendance_grid
 
 attendance_router = APIRouter(prefix="/attendance", tags=["attendance"])
 

@@ -5,7 +5,7 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.service_layer.services.user.team_members_listing.service import get_team_member_list
+from app.service_layer.services import get_team_member_list
 
 users_router = APIRouter(prefix="/users", tags=["users"])
 

@@ -1,11 +1,11 @@
 from .practice import practice_router
 from .team import teams_router
 from .attendance import attendance_router
-from . import user
+from .user import users_router
 
 __all__ = [
     "practice_router",
     "teams_router",
     "attendance_router",
-    "user",
+    "users_router",
 ]

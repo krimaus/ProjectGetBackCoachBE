@@ -4,8 +4,9 @@ import uuid
 from sqlalchemy import select
 
 from app.db_layer.orm_models import Practice, Attendance
-from pydantic_models.attendance import AttendanceItem, AttendanceListingItem
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.service_layer.pydantic_models import AttendanceItem, AttendanceListingItem
 
 # TODO: error handling 
 async def get_attendance_grid(

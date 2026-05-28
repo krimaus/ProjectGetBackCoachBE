@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.db_layer.orm_models.user import User
 from app.db_layer.orm_models.user_role import UserRole
-from app.service_layer.pydantic_models.user import UserFullName
+from app.service_layer.pydantic_models import UserFullName
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

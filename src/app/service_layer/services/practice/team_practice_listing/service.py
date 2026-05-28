@@ -3,8 +3,9 @@ import datetime as dt
 from app.db_layer.orm_models import Practice
 from collections import defaultdict
 from sqlalchemy import select
-from pydantic_models.practice import PracticeItem, TeamPracticeListingItem
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.service_layer.pydantic_models import PracticeItem, TeamPracticeListingItem
     
 # TODO: error handling 
 async def get_team_practices(session: AsyncSession, team_id: uuid.UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:

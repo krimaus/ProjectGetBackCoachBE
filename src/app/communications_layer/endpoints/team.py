@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.service_layer.pydantic_models.team import TeamItem
-from app.service_layer.services.team.listing.service import get_team_names
+from app.service_layer.services import get_team_names
 
 
 teams_router = APIRouter(prefix="/teams", tags=["teams"])

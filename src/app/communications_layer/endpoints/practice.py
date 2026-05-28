@@ -6,7 +6,7 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from service_layer.services.practice.team_practice_listing import get_team_practices
+from app.service_layer.services import get_team_practices
 
 practice_router = APIRouter(prefix="/practice", tags=["practice"])
 

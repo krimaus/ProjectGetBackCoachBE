@@ -1,8 +1,9 @@
 from app.db_layer.orm_models.team import Team
-from app.service_layer.pydantic_models.team import TeamItem
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sqlalchemy import select
+
+from app.service_layer.pydantic_models import TeamItem
 
 
 async def get_team_names(session: AsyncSession) -> list[TeamItem]:
