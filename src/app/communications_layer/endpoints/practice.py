@@ -16,12 +16,12 @@ practice_router = APIRouter(prefix="/practice", tags=["practice"])
 )
 async def get_team_practice(
     team_id: UUID,
-    session: AsyncSession = Depends(get_session),
     time_from: dt.datetime | None = None,
     time_to: dt.datetime | None = None,
+    session: AsyncSession = Depends(get_session),
 ):
     if time_from is None:
-        time_from = dt.datetime.now()
+        time_from = dt.datetime.now(dt.timezone.utc)
     if time_to is None:
         time_to = time_from + dt.timedelta(days=7)
         

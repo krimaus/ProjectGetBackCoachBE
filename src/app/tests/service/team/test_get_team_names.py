@@ -12,7 +12,6 @@ async def test_get_team_names_returns_sorted_team_list(async_session):
     team3 = Team(id=uuid.uuid4(), name="Delta")
 
     async_session.add_all([team1, team2, team3])
-    await async_session.commit()
 
     result = await get_team_names(async_session)
 

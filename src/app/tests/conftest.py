@@ -84,7 +84,6 @@ async def engine(setup_test_db):
         f"@{TEST_DB_HOST}:{TEST_DB_PORT}/{TEST_DB_NAME}",
         poolclass=NullPool,
     )
-
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -98,34 +97,26 @@ async def engine(setup_test_db):
 
 @pytest.fixture
 async def async_session(engine):
-    async_session_maker = sessionmaker(
-        engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-    )
+    async with engine.connect() as conn:
+        await conn.begin()
+        
+        session = AsyncSession(bind=conn, expire_on_commit=False)
+        await conn.begin_nested()
 
-    async with async_session_maker() as session:
-        async with session.begin():
-            yield session
-            await session.rollback()
+        yield session
+
+        await session.close()
+        await conn.rollback()
 
 
 @pytest.fixture
-async def client(engine):
-    async_session_maker = sessionmaker(
-        engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-    )
-
+async def client(async_session):
     async def override_get_session():
-        async with async_session_maker() as session:
-            yield session
+        yield async_session
 
     app.dependency_overrides[get_session] = override_get_session
 
     from httpx import AsyncClient
-
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 

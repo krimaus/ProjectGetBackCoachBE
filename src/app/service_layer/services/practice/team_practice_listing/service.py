@@ -1,6 +1,5 @@
 import uuid
 import datetime as dt
-from app.db import get_session
 from app.db_layer.orm_models import Practice
 from collections import defaultdict
 from sqlalchemy import select
@@ -8,7 +7,7 @@ from pydantic_models.practice import PracticeItem, TeamPracticeListingItem
 from sqlalchemy.ext.asyncio import AsyncSession
     
 # TODO: error handling 
-async def get_team_practices(session: AsyncSession, team_id: uuid.uuid4, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
+async def get_team_practices(session: AsyncSession, team_id: uuid.UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
 
     stmt = (
         select(Practice)
@@ -40,6 +39,5 @@ async def get_team_practices(session: AsyncSession, team_id: uuid.uuid4, time_fr
                 for p in daily_practices
             ],
         )
-        for date, daily_practices in sorted(practice_by_date.items())
+        for date, daily_practices in practice_by_date.items()
     ]
-

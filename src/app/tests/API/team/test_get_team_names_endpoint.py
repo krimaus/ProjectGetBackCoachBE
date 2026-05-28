@@ -11,7 +11,7 @@ async def test_list_teams_endpoint_returns_sorted_list(client, async_session):
     team3 = Team(id=uuid.uuid4(), name="Delta")
 
     async_session.add_all([team1, team2, team3])
-    await async_session.commit()
+    await async_session.flush()
 
     response = await client.get("/teams/names")
 
@@ -19,5 +19,4 @@ async def test_list_teams_endpoint_returns_sorted_list(client, async_session):
 
     data = response.json()
 
-    assert len(data) == 3
     assert [team["name"] for team in data] == ["Alpha", "Delta", "Zeta"]

@@ -16,8 +16,8 @@ async def get_team_names(session: AsyncSession) -> list[TeamItem]:
 
     return [
         TeamItem(
-            id=id,
-            name=name
+            id=row.id,
+            name=row.name
         )
-        for id, name in rows
+        for row in rows
     ]

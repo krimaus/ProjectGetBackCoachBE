@@ -18,4 +18,4 @@ class Attendance(Base):
         nullable=False
     )
 
-    notes: Mapped[str]
+    notes: Mapped[str | None]
