@@ -43,9 +43,9 @@ async def test_get_attendance_grid(async_session):
     async_session.add_all([practice1, practice2, practice3])
     
     attendance_list1 = [
-        {"user_id": "a1b2c3d4-0001-0000-0000-000000000000", "planned": True, "real": True},
-        {"user_id": "a1b2c3d4-0002-0000-0000-000000000000", "planned": True, "real": True},
-        {"user_id": "a1b2c3d4-0003-0000-0000-000000000000", "planned": True, "real": True},
+        {"user_id": str(uuid.uuid4()), "planned": True, "real": True},
+        {"user_id": str(uuid.uuid4()), "planned": True, "real": True},
+        {"user_id": str(uuid.uuid4()), "planned": True, "real": True},
     ]
     
     attendance1 = Attendance(
@@ -55,9 +55,9 @@ async def test_get_attendance_grid(async_session):
     )
     
     attendance_list2 = [
-        {"user_id": "a1b2c3d4-0001-0000-0000-000000000000", "planned": True, "real": True},
-        {"user_id": "a1b2c3d4-0002-0000-0000-000000000000", "planned": True, "real": False},
-        {"user_id": "a1b2c3d4-0003-0000-0000-000000000000", "planned": True, "real": True},
+        {"user_id": str(uuid.uuid4()), "planned": True, "real": True},
+        {"user_id": str(uuid.uuid4()), "planned": True, "real": False},
+        {"user_id": str(uuid.uuid4()), "planned": True, "real": True},
     ]
     
     attendance2 = Attendance(

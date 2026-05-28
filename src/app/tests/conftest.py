@@ -1,4 +1,5 @@
 import os
+from httpx import ASGITransport
 import pytest
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -8,6 +9,7 @@ from app.db_layer.orm_models.common.base import Base
 from app.main import app
 from app.db import get_session
 import psycopg2
+from psycopg2 import sql
 
 TEST_DB_NAME = os.getenv("TEST_DB_NAME")
 TEST_DB_USER = os.getenv("TEST_DB_USER")
@@ -23,8 +25,9 @@ def create_test_database():
         password=TEST_DB_PASSWORD,
         host=TEST_DB_HOST,
         port=TEST_DB_PORT,
-        autocommit=True,
     )
+    
+    conn.autocommit = True
 
     with conn.cursor() as cur:
         cur.execute(
@@ -35,8 +38,8 @@ def create_test_database():
 
         if not exists:
             cur.execute(
-                psycopg2.sql.SQL("CREATE DATABASE {}").format(
-                    psycopg2.sql.Identifier(TEST_DB_NAME)
+                sql.SQL("CREATE DATABASE {}").format(
+                    sql.Identifier(TEST_DB_NAME)
                 )
             )
 
@@ -49,8 +52,9 @@ def drop_test_database():
         password=TEST_DB_PASSWORD,
         host=TEST_DB_HOST,
         port=TEST_DB_PORT,
-        autocommit=True,
     )
+    
+    conn.autocommit = True
 
     with conn.cursor() as cur:
         cur.execute(
@@ -64,8 +68,8 @@ def drop_test_database():
         )
 
         cur.execute(
-            psycopg2.sql.SQL("DROP DATABASE IF EXISTS {}").format(
-                psycopg2.sql.Identifier(TEST_DB_NAME)
+            sql.SQL("DROP DATABASE IF EXISTS {}").format(
+                sql.Identifier(TEST_DB_NAME)
             )
         )
 
@@ -117,7 +121,10 @@ async def client(async_session):
     app.dependency_overrides[get_session] = override_get_session
 
     from httpx import AsyncClient
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), 
+        base_url="http://test"
+    ) as ac:
         yield ac
 
     app.dependency_overrides.clear()

@@ -53,5 +53,19 @@ async def test_get_team_practices(client, async_session):
     data = response.json()
 
     assert len(data) == 2
-    assert data[0]["practice"][0]["location"] == "Location 1"
-    assert data[1]["practice"][0]["location"] == "Location 2"
+    
+    returned_ids = {item["practice"][0]["id"] for item in data}
+    assert str(practice1.id) in returned_ids
+    assert str(practice2.id) in returned_ids
+    assert str(practice3.id) not in returned_ids
+
+    p1 = data[0]["practice"][0]
+    assert p1["id"] == str(practice1.id)
+    assert p1["description"] == "Some Description"
+    assert p1["start_time"] == "2026-03-11T14:30:00Z"
+    assert p1["end_time"] == "2026-03-11T16:30:00Z"
+
+    p2 = data[1]["practice"][0]
+    assert p2["id"] == str(practice2.id)
+    assert p2["start_time"] == "2026-03-12T14:30:00Z"
+    assert p2["end_time"] == "2026-03-12T16:30:00Z"

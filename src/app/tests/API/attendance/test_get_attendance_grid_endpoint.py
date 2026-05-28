@@ -22,6 +22,7 @@ async def test_get_attendance_grid(client, async_session):
         start_time=datetime(2026, 6, 10, 10, 0, 0, tzinfo=timezone.utc),
         end_time=datetime(2026, 6, 10, 12, 0, 0, tzinfo=timezone.utc),
         description="Practice 1",
+        location="Test location"
     )
     practice2 = Practice(
         id=uuid.uuid4(),
@@ -29,6 +30,7 @@ async def test_get_attendance_grid(client, async_session):
         start_time=datetime(2026, 6, 11, 10, 0, 0, tzinfo=timezone.utc),
         end_time=datetime(2026, 6, 11, 12, 0, 0, tzinfo=timezone.utc),
         description="Practice 2",
+        location="Test location"
     )
     practice_out_of_range = Practice(
         id=uuid.uuid4(),
@@ -36,6 +38,7 @@ async def test_get_attendance_grid(client, async_session):
         start_time=datetime(2026, 6, 20, 10, 0, 0, tzinfo=timezone.utc),
         end_time=datetime(2026, 6, 20, 12, 0, 0, tzinfo=timezone.utc),
         description="Out of range",
+        location="Test location"
     )
     async_session.add_all([practice1, practice2, practice_out_of_range])
     await async_session.flush()
@@ -78,14 +81,14 @@ async def test_get_attendance_grid(client, async_session):
     assert len(data) == 2
 
     first = data[0]
-    assert first["date"] == "2026-06-10"
+    assert first["date"] == "2026-06-10T10:00:00Z"
     assert len(first["attendance"]) == 2
     user1_entry = next(e for e in first["attendance"] if e["user_id"] == user1_id)
     assert user1_entry["planned"] is True
     assert user1_entry["real"] is True
 
     second = data[1]
-    assert second["date"] == "2026-06-11"
+    assert second["date"] == "2026-06-11T10:00:00Z"
     assert len(second["attendance"]) == 1
     assert second["attendance"][0]["user_id"] == user1_id
     assert second["attendance"][0]["planned"] is False

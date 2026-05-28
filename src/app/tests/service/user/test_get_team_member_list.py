@@ -30,4 +30,8 @@ async def test_get_team_members_list(async_session):
     
     assert len(result) == 3
     
-    assert [user.id for user in result] == [user1.id, user2.id, user3.id]
+    result_ids = {user.id for user in result}
+    assert result_ids == {user1.id, user2.id, user3.id}
+
+    assert result[0].last_name == "Doba"
+    assert result[1].last_name == "Kowalski"
