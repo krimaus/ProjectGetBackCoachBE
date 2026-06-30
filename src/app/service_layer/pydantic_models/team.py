@@ -11,3 +11,6 @@ from pydantic import UUID4, BaseModel
 class TeamItem(BaseModel):
     id: UUID4
     name: str
+    
+class CreateTeamInput(BaseModel):
+    name: str

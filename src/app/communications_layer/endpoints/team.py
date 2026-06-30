@@ -5,13 +5,32 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.service_layer.pydantic_models.team import TeamItem
+from app.service_layer.pydantic_models.team import CreateTeamInput, TeamItem
 from app.service_layer.services import get_team_names
 from src.app.auth_util import user_dependency
+from src.app.service_layer.services.team.service import create_team_service
 from src.app.service_layer.services.user.team_members_listing.service import get_team_member_list
 
 
 teams_router = APIRouter(prefix="/teams", tags=["teams"])
+
+@teams_router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=TeamItem
+)
+async def create_team(
+    payload: CreateTeamInput,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    return await create_team_service(session, user, payload)
+
 
 @teams_router.get(
     "/names",

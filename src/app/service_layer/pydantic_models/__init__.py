@@ -1,8 +1,8 @@
 from .practice import PracticeItem, TeamPracticeListingItem
 from .attendance import AttendanceItem, AttendanceListingItem
-from .team import TeamItem
+from .team import TeamItem, CreateTeamInput
 from .user_role import UserRoleModel
-from .user import UserFullName, UserItem
+from .user import UserItem
 
 __all__ = [
     "PracticeItem",
@@ -11,6 +11,6 @@ __all__ = [
     "AttendanceListingItem",
     "TeamItem",
     "UserRoleModel",
-    "UserFullName",
-    "UserItem"
+    "UserItem",
+    "CreateTeamInput",
 ]
