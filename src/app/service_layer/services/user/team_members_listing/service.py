@@ -4,11 +4,11 @@ from sqlalchemy import select
 
 from app.db_layer.orm_models.user import User
 from app.db_layer.orm_models.user_role import UserRole
-from app.service_layer.pydantic_models import UserFullName
+from app.service_layer.pydantic_models import UserItem
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def get_team_member_list(session: AsyncSession, team_id: uuid.UUID) -> list[UserFullName]:
+async def get_team_member_list(session: AsyncSession, team_id: uuid.UUID) -> list[UserItem]:
   
     stmt = (
         select(User)
@@ -23,10 +23,11 @@ async def get_team_member_list(session: AsyncSession, team_id: uuid.UUID) -> lis
     members = result.scalars().all()
         
     return [
-            UserFullName(
+            UserItem(
                 id=m.id,
                 first_name=m.first_name,
-                last_name=m.last_name, 
+                last_name=m.last_name,
+                username=m.username
             )
             for m in members
         ]

@@ -21,12 +21,3 @@ class UserItem(BaseModel):
     first_name: str
     last_name: str
     username: str
-
-class UserFullName(BaseModel):
-    id: UUID4
-    first_name: str
-    last_name: str
-    
-# class UserList(BaseModel):
-#     team_id: UUID4
-#     user_list: list[UserFullName]
