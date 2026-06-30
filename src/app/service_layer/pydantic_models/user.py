@@ -10,6 +10,18 @@ from pydantic import UUID4, BaseModel
 #     class Config:
 #         frozen = False
 
+class CreateUserInput(BaseModel):
+    first_name: str
+    last_name: str
+    username: str
+    password: str
+
+class UserItem(BaseModel):
+    id: UUID4
+    first_name: str
+    last_name: str
+    username: str
+
 class UserFullName(BaseModel):
     id: UUID4
     first_name: str

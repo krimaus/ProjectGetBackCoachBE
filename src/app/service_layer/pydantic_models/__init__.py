@@ -2,7 +2,7 @@ from .practice import PracticeItem, TeamPracticeListingItem
 from .attendance import AttendanceItem, AttendanceListingItem
 from .team import TeamItem
 from .user_role import UserRoleModel
-from .user import UserFullName
+from .user import UserFullName, UserItem
 
 __all__ = [
     "PracticeItem",
@@ -12,4 +12,5 @@ __all__ = [
     "TeamItem",
     "UserRoleModel",
     "UserFullName",
+    "UserItem"
 ]

@@ -21,4 +21,4 @@ session_maker = async_sessionmaker(
 )
 
 async def get_session() -> AsyncSession:
-    return await session_maker()
+    return session_maker()
