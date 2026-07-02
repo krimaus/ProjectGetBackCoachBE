@@ -8,7 +8,7 @@ from app.service_layer.pydantic_models import UserItem
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def get_team_member_list(session: AsyncSession, team_id: uuid.UUID) -> list[UserItem]:
+async def get_team_members_names_service(session: AsyncSession, team_id: uuid.UUID) -> list[UserItem]:
   
     stmt = (
         select(User)

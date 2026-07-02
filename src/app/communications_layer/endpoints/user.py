@@ -3,7 +3,7 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.service_layer.services import get_team_member_list, create_user_service
+from app.service_layer.services import get_team_members_names_service, create_user_service
 from src.app.service_layer.pydantic_models import UserItem
 from src.app.service_layer.pydantic_models.user import CreateUserInput
 

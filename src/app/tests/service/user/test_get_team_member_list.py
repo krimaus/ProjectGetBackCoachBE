@@ -5,7 +5,7 @@ from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from app.db_layer.orm_models.team import Team
 from app.db_layer.orm_models.user import User
 from app.db_layer.orm_models.user_role import UserRole
-from app.service_layer.services.user.team_members_listing.service import get_team_member_list
+from app.service_layer.services.user.team_members_listing.service import get_team_members_names_service
 
 
 @pytest.mark.asyncio
@@ -26,7 +26,7 @@ async def test_get_team_members_list(async_session):
     
     async_session.add_all([user_role1, user_role2, user_role3])
     
-    result = await get_team_member_list(session=async_session, team_id=team1.id)
+    result = await get_team_members_names_service(session=async_session, team_id=team1.id)
     
     assert len(result) == 3
     

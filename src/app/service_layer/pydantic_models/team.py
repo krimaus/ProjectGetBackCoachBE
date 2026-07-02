@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import UUID4, BaseModel
 
 
@@ -14,3 +16,7 @@ class TeamItem(BaseModel):
     
 class CreateTeamInput(BaseModel):
     name: str
+    
+    
+class AddMembersInput(BaseModel):
+    id_list: list[UUID]

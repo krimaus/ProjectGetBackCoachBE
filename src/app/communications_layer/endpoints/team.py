@@ -5,11 +5,12 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.service_layer.pydantic_models.team import CreateTeamInput, TeamItem
+from app.service_layer.pydantic_models.team import AddMembersInput, CreateTeamInput, TeamItem
 from app.service_layer.services import get_team_names
 from src.app.auth_util import user_dependency
-from src.app.service_layer.services.team.service import create_team_service
-from src.app.service_layer.services.user.team_members_listing.service import get_team_member_list
+from src.app.service_layer.services.auth.service import check_user_role_in_team
+from src.app.service_layer.services.team.service import add_team_members_service, create_team_service
+from src.app.service_layer.services.user.team_members_listing.service import get_team_members_names_service
 
 
 teams_router = APIRouter(prefix="/teams", tags=["teams"])
@@ -30,6 +31,25 @@ async def create_team(
             detail='Authentication failed'
         )
     return await create_team_service(session, user, payload)
+
+
+@teams_router.post(
+    "/{team_id}/members",
+    status_code=status.HTTP_200_OK,
+    response_model=list[UUID],
+)
+async def add_team_members(
+    team_id: UUID,
+    payload: AddMembersInput,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session)
+):
+    if user is None or check_user_role_in_team(session, user['id'], team_id) == 'MEMBER':
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    return await add_team_members_service(session, team_id, payload)        
 
 
 @teams_router.get(
@@ -62,4 +82,4 @@ async def get_team_members_names(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    return await get_team_member_list(session, team_id)
+    return await get_team_members_names_service(session, team_id)

@@ -1,12 +1,14 @@
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.auth_util import encode_jwt, password_hash
 from src.app.db_layer.orm_models.user import User
+from src.app.db_layer.orm_models.user_role import UserRole
 from src.app.service_layer.pydantic_models.auth import Token
 
 async def authenticate_user(session: AsyncSession, username: str, password: str) -> Token:
@@ -41,3 +43,19 @@ async def authenticate_user(session: AsyncSession, username: str, password: str)
         access_token=await encode_jwt(encode),
         token_type="bearer",
     )
+    
+async def check_user_role_in_team(session: AsyncSession, user_id: UUID, team_id: UUID) -> str:
+    stmt = (
+        select(UserRole)
+        .where(
+            and_(
+                UserRole.user_id == user_id,
+                UserRole.team_id == team_id
+            )
+        )
+    )
+    
+    result = await session.scalars(stmt)
+    user_role = result.first()
+    
+    return user_role.role
