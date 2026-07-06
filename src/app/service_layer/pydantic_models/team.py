@@ -20,3 +20,7 @@ class CreateTeamInput(BaseModel):
     
 class AddMembersInput(BaseModel):
     id_list: list[UUID]
+    
+    
+class DeleteMembersInput(BaseModel):
+    id_list: list[UUID]

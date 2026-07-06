@@ -5,12 +5,12 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.service_layer.pydantic_models.team import AddMembersInput, CreateTeamInput, TeamItem
+from app.service_layer.pydantic_models.team import AddMembersInput, CreateTeamInput, DeleteMembersInput, TeamItem
 from app.service_layer.services import get_team_names
 from src.app.auth_util import user_dependency
 from src.app.service_layer.services.auth.service import check_user_role_in_team
-from src.app.service_layer.services.team.service import add_team_members_service, create_team_service, delete_team_service
-from src.app.service_layer.services.user.team_members_listing.service import get_team_members_names_service
+from src.app.service_layer.services.team.service import add_team_members_service, create_team_service, delete_team_service, remove_team_members_service
+from src.app.service_layer.services.user.team_members_listing.service import get_team_members_service
 
 
 teams_router = APIRouter(prefix="/teams", tags=["teams"])
@@ -73,7 +73,7 @@ async def get_team_names_list(
     "/{team_id}/members",
     status_code=status.HTTP_200_OK,
 )
-async def get_team_members_names(
+async def get_team_members(
     team_id: UUID,
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
@@ -83,7 +83,7 @@ async def get_team_members_names(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    return await get_team_members_names_service(session, team_id)
+    return await get_team_members_service(session, team_id)
 
 
 @teams_router.delete(
@@ -95,7 +95,7 @@ async def delete_team(
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
 ):
-    if user is None or await check_user_role_in_team(session, user['id'], team_id) == 'MEMBER':
+    if user is None or await check_user_role_in_team(session, user['id'], team_id) != 'OWNER':
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
@@ -103,3 +103,21 @@ async def delete_team(
     
     await delete_team_service(session, team_id)
         
+
+@teams_router.delete(
+    "/{team_id}/members",
+    status_code=status.HTTP_200_OK
+)
+async def remove_team_members(
+    team_id: UUID,
+    payload: DeleteMembersInput,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+):
+    if user is None or await check_user_role_in_team(session, user['id'], team_id) == 'MEMBER':
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    
+    await remove_team_members_service(session, team_id, payload)

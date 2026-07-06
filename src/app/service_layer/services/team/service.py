@@ -5,13 +5,13 @@ from fastapi import HTTPException
 from app.db_layer.orm_models.team import Team
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sqlalchemy import delete, select
+from sqlalchemy import and_, delete, select
 
 from app.service_layer.pydantic_models import TeamItem
 from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from src.app.db_layer.orm_models.user import User
 from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.team import AddMembersInput, CreateTeamInput
+from src.app.service_layer.pydantic_models.team import AddMembersInput, CreateTeamInput, DeleteMembersInput
 
 
 async def get_team_names(session: AsyncSession) -> list[TeamItem]:
@@ -102,6 +102,18 @@ async def delete_team_service(session: AsyncSession, team_id: UUID) -> None:
     stmt = delete(Team).where(
         Team.id == team_id
     )
+    
+    await session.execute(stmt)
+    await session.commit()
+    
+    
+async def remove_team_members_service(session: AsyncSession, team_id: UUID, payload: DeleteMembersInput) -> None:
+    stmt = delete(UserRole).where(
+            and_(
+                UserRole.team_id == team_id,
+                UserRole.user_id.in_(set(payload.id_list))
+            )
+        )
     
     await session.execute(stmt)
     await session.commit()
