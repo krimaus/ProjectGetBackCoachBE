@@ -44,7 +44,7 @@ async def authenticate_user(session: AsyncSession, username: str, password: str)
         token_type="bearer",
     )
     
-async def check_user_role_in_team(session: AsyncSession, user_id: UUID, team_id: UUID) -> str:
+async def check_user_role_in_team(session: AsyncSession, user_id: UUID, team_id: UUID) -> str | None:
     stmt = (
         select(UserRole)
         .where(
@@ -58,4 +58,6 @@ async def check_user_role_in_team(session: AsyncSession, user_id: UUID, team_id:
     result = await session.scalars(stmt)
     user_role = result.first()
     
-    return user_role.role
+    if user_role.role is not None:
+        return user_role.role
+    return None
