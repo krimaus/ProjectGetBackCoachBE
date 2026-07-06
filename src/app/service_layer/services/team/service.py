@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import HTTPException
+from starlette import status
 
 from app.db_layer.orm_models.team import Team
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +12,7 @@ from app.service_layer.pydantic_models import TeamItem
 from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from src.app.db_layer.orm_models.user import User
 from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.team import AddMembersInput, CreateTeamInput, DeleteMembersInput
+from src.app.service_layer.pydantic_models.team import AddMembersInput, ChangeNameInput, CreateTeamInput, DeleteMembersInput
 
 
 async def get_team_names(session: AsyncSession) -> list[TeamItem]:
@@ -64,7 +65,7 @@ async def add_team_members_service(session: AsyncSession, team_id: UUID, payload
     missing_ids = requested_ids - existing_ids
     if missing_ids:
         raise HTTPException(
-            status_code=422,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid user_ids: {sorted(missing_ids)}"
         )
 
@@ -77,7 +78,7 @@ async def add_team_members_service(session: AsyncSession, team_id: UUID, payload
 
     if already_members:
         raise HTTPException(
-            status_code=409,
+            status_code=status.HTTP_409_CONFLICT,
             detail=f"Users already on team: {sorted(already_members)}"
         )
 
@@ -117,4 +118,22 @@ async def remove_team_members_service(session: AsyncSession, team_id: UUID, payl
     
     await session.execute(stmt)
     await session.commit()
+    
+
+async def rename_team_service(session: AsyncSession, team_id: UUID, payload: ChangeNameInput) -> Team:
+    stmt = select(Team).where(Team.id == team_id)
+    result = await session.execute(stmt)
+    team = result.scalar_one_or_none()
+
+    if team is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Team not found: {team_id}"
+        )
+
+    team.name = payload.name
+    await session.commit()
+    await session.refresh(team)
+
+    return team
     

@@ -24,3 +24,7 @@ class AddMembersInput(BaseModel):
     
 class DeleteMembersInput(BaseModel):
     id_list: list[UUID]
+    
+    
+class ChangeNameInput(BaseModel):
+    name: str

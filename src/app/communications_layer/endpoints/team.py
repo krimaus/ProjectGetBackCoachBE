@@ -5,11 +5,11 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.service_layer.pydantic_models.team import AddMembersInput, CreateTeamInput, DeleteMembersInput, TeamItem
+from app.service_layer.pydantic_models.team import AddMembersInput, ChangeNameInput, CreateTeamInput, DeleteMembersInput, TeamItem
 from app.service_layer.services import get_team_names
 from src.app.auth_util import user_dependency
 from src.app.service_layer.services.auth.service import check_user_role_in_team
-from src.app.service_layer.services.team.service import add_team_members_service, create_team_service, delete_team_service, remove_team_members_service
+from src.app.service_layer.services.team.service import add_team_members_service, rename_team_service, create_team_service, delete_team_service, remove_team_members_service
 from src.app.service_layer.services.user.team_members_listing.service import get_team_members_service
 
 
@@ -49,7 +49,31 @@ async def add_team_members(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    return await add_team_members_service(session, team_id, payload)        
+    return await add_team_members_service(session, team_id, payload)
+
+
+@teams_router.put(
+    "/{team_id}",
+    status_code=status.HTTP_200_OK
+)
+async def rename_team(
+    team_id: UUID,
+    payload: ChangeNameInput,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session)
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    if await check_user_role_in_team(session, user['id'], team_id) != 'OWNER':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail='Insufficient permissions'
+        )
+    
+    return await rename_team_service(session, team_id, payload)
 
 
 @teams_router.get(
