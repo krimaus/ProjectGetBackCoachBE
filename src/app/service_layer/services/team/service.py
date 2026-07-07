@@ -12,7 +12,7 @@ from app.service_layer.pydantic_models import TeamItem
 from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from src.app.db_layer.orm_models.user import User
 from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.team import AddMembersInput, ChangeNameInput, CreateTeamInput, DeleteMembersInput
+from src.app.service_layer.pydantic_models.team import AddMembersInput, ChangeNameInput, ChangeRankInput, CreateTeamInput, DeleteMembersInput
 
 
 async def get_team_names(session: AsyncSession) -> list[TeamItem]:
@@ -136,4 +136,26 @@ async def rename_team_service(session: AsyncSession, team_id: UUID, payload: Cha
     await session.refresh(team)
 
     return team
-    
+
+
+async def change_member_rank_service(session: AsyncSession, team_id: UUID, user_id: UUID, payload: ChangeRankInput):
+    stmt = select(UserRole).where(
+            and_(
+                UserRole.team_id == team_id,
+                UserRole.user_id == user_id
+            )
+        )
+    result = await session.execute(stmt)
+    user_role = result.scalar_one_or_none()
+
+    if user_role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User not found in team."
+        )
+
+    user_role.role = payload.role
+    await session.commit()
+    await session.refresh(user_role)
+
+    return user_role

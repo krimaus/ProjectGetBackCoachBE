@@ -1,6 +1,9 @@
+from typing import Literal
 from uuid import UUID
 
 from pydantic import UUID4, BaseModel
+
+from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 
 
 # class TeamModel(BaseModel):
@@ -28,3 +31,7 @@ class DeleteMembersInput(BaseModel):
     
 class ChangeNameInput(BaseModel):
     name: str
+    
+    
+class ChangeRankInput(BaseModel):
+    role: Literal[UserRoleEnum.MEMBER, UserRoleEnum.COACH]
