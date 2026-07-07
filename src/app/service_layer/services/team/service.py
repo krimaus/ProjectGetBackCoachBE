@@ -159,3 +159,34 @@ async def change_member_rank_service(session: AsyncSession, team_id: UUID, user_
     await session.refresh(user_role)
 
     return user_role
+
+async def change_team_ownership_service(session: AsyncSession, team_id: UUID, new_owner_id: UUID):
+    stmt = select(UserRole).where(
+            and_(
+                UserRole.team_id == team_id,
+                UserRole.role == UserRoleEnum.OWNER
+            )
+        )
+    result = await session.execute(stmt)
+    old_owner = result.scalars().one()
+    old_owner.role = UserRoleEnum.COACH
+    
+    stmt = select(UserRole).where(
+            and_(
+                UserRole.team_id == team_id,
+                UserRole.user_id == new_owner_id
+            )
+        )
+    result = await session.execute(stmt)
+    new_owner = result.scalar_one_or_none()
+    
+    if new_owner is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User not found in team."
+        )
+        
+    new_owner.role = UserRoleEnum.OWNER
+    await session.commit()
+    await session.refresh(new_owner)
+    return new_owner
