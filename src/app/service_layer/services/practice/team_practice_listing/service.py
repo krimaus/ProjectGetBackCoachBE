@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.service_layer.pydantic_models import PracticeItem, TeamPracticeListingItem
 from src.app.db_layer.orm_models.attendance import Attendance
 from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.practice import CreatePracticeInput
+from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, UpdatePracticeInput
     
 # TODO: error handling 
 async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
@@ -83,3 +83,22 @@ async def create_practice_service(session: AsyncSession, team_id: UUID, payload:
     await session.refresh(practice)
     
     return practice
+
+
+async def update_practice_service(session: AsyncSession, practice_id: UUID, payload: UpdatePracticeInput):
+    stmt = select(Practice).where(Practice.id == practice_id)
+    
+    result = await session.execute(stmt)
+    practice = result.scalar_one_or_none()
+    
+    practice.start_time = payload.start_time
+    practice.end_time = payload.end_time
+    practice.location = payload.location
+    practice.description = payload.description
+    
+    await session.commit()
+    await session.refresh(practice)
+
+    return practice
+    
+    
