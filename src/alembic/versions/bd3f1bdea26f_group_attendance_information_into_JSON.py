@@ -25,6 +25,7 @@ def upgrade() -> None:
     op.drop_column('attendance', 'user_id')
     op.drop_column('attendance', 'actual_attendance')
     op.add_column('practice', sa.Column('team_id', sa.Uuid(), nullable=False))
+    sa.PrimaryKeyConstraint('practice_id')
     # ### end Alembic commands ###
 
 
@@ -35,4 +36,5 @@ def downgrade() -> None:
     op.add_column('attendance', sa.Column('user_id', sa.UUID(), autoincrement=False, nullable=False))
     op.add_column('attendance', sa.Column('planned_attendance', sa.BOOLEAN(), autoincrement=False, nullable=False))
     op.drop_column('attendance', 'attendance_list')
+    sa.PrimaryKeyConstraint('practice_id', 'user_id')
     # ### end Alembic commands ###
