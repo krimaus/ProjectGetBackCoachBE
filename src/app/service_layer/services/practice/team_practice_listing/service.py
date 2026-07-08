@@ -1,16 +1,18 @@
 import datetime as dt
 from uuid import UUID
+
+from fastapi import HTTPException
 from app.db_layer.orm_models import Practice
 from collections import defaultdict
-from sqlalchemy import select
+from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
 
 from app.service_layer.pydantic_models import PracticeItem, TeamPracticeListingItem
 from src.app.db_layer.orm_models.attendance import Attendance
 from src.app.db_layer.orm_models.user_role import UserRole
 from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, UpdatePracticeInput
     
-# TODO: error handling 
 async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
 
     stmt = (
@@ -100,5 +102,28 @@ async def update_practice_service(session: AsyncSession, practice_id: UUID, payl
     await session.refresh(practice)
 
     return practice
+
+
+async def delete_practice_service(session: AsyncSession, team_id: UUID, practice_id: UUID) -> None:
+    stmt = delete(Practice).where(
+            and_(
+                Practice.id == practice_id,
+                Practice.team_id == team_id
+            )
+        )
     
+    result = await session.execute(stmt)
+
+    if result.rowcount == 0:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Practice not found",
+        )
     
+    stmt = delete(Attendance).where(
+            Attendance.practice_id == practice_id
+        )
+    
+    await session.execute(stmt)
+    await session.commit()
