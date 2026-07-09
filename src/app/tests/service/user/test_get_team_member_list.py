@@ -5,7 +5,7 @@ from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from app.db_layer.orm_models.team import Team
 from app.db_layer.orm_models.user import User
 from app.db_layer.orm_models.user_role import UserRole
-from app.service_layer.services.user.team_members_listing.service import get_team_members_service
+from src.app.service_layer.services.user.service import get_team_members_service
 
 
 @pytest.mark.asyncio

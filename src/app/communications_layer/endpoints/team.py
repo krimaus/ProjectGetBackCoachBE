@@ -10,7 +10,7 @@ from app.service_layer.services import get_team_names
 from src.app.auth_util import user_dependency
 from src.app.service_layer.services.auth.service import check_user_role_in_team
 from src.app.service_layer.services.team.service import add_team_members_service, change_member_rank_service, change_team_ownership_service, rename_team_service, create_team_service, delete_team_service, remove_team_members_service
-from src.app.service_layer.services.user.team_members_listing.service import get_team_members_service
+from src.app.service_layer.services.user.service import get_team_members_service
 
 
 teams_router = APIRouter(prefix="/teams", tags=["teams"])
@@ -44,7 +44,7 @@ async def add_team_members(
     user: user_dependency,
     session: AsyncSession = Depends(get_session)
 ):
-    if user is None or await check_user_role_in_team(session, user['id'], team_id) == 'MEMBER':
+    if user is None or await check_user_role_in_team(session, user['id'], team_id) not in ['OWNER', 'COACH']:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
@@ -186,7 +186,7 @@ async def remove_team_members(
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
 ):
-    if user is None or await check_user_role_in_team(session, user['id'], team_id) == 'MEMBER':
+    if user is None or await check_user_role_in_team(session, user['id'], team_id) not in ['OWNER', 'COACH']:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'

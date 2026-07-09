@@ -11,7 +11,7 @@ from src.app.auth_util import user_dependency
 from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, TeamPracticeListingItem, UpdatePracticeInput
 from src.app.service_layer.services.auth.service import check_user_role_in_team
-from src.app.service_layer.services.practice.team_practice_listing.service import create_practice_service, delete_practice_service, update_practice_service
+from src.app.service_layer.services.practice.team_practice_listing.service import create_practice_service, delete_practice_service, mark_planned_attendance_service, update_practice_service
 
 practice_router = APIRouter(prefix="/practice", tags=["practice"])
 
@@ -86,6 +86,26 @@ async def update_practice(
         )
     
     return await update_practice_service(session, practice_id, payload)
+
+
+@practice_router.put(
+    "/{team_id}/{practice_id}/attendance/planned",
+    status_code=status.HTTP_200_OK
+)
+async def mark_planned_attendance(
+    team_id: UUID,
+    practice_id: UUID,
+    attendance: bool,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    
+    return await mark_planned_attendance_service(session, team_id, practice_id, user['id'], attendance)
 
 
 @practice_router.delete(

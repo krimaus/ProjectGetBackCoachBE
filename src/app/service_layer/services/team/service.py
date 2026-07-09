@@ -108,15 +108,36 @@ async def delete_team_service(session: AsyncSession, team_id: UUID) -> None:
     await session.commit()
     
     
-async def remove_team_members_service(session: AsyncSession, team_id: UUID, payload: DeleteMembersInput) -> None:
-    stmt = delete(UserRole).where(
-            and_(
-                UserRole.team_id == team_id,
-                UserRole.user_id.in_(set(payload.id_list))
-            )
+async def remove_team_members_service(
+    session: AsyncSession, team_id: UUID, payload: DeleteMembersInput
+) -> None:
+    target_ids = set(payload.id_list)
+
+    owner_stmt = select(UserRole.user_id).where(
+        UserRole.team_id == team_id,
+        UserRole.role == UserRoleEnum.OWNER,
+    )
+    owner_id = (await session.execute(owner_stmt)).scalar_one_or_none()
+
+    if owner_id is not None and owner_id in target_ids:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Team owner must transfer ownership before being removed",
         )
-    
-    await session.execute(stmt)
+
+    stmt = delete(UserRole).where(
+        UserRole.team_id == team_id,
+        UserRole.user_id.in_(target_ids)
+    )
+    result = await session.execute(stmt)
+
+    if result.rowcount != len(target_ids):
+        await session.rollback()
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail="One or more users are not members of this team",
+        )
+
     await session.commit()
     
 
