@@ -9,9 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.service_layer.pydantic_models import PracticeItem, TeamPracticeListingItem
-from src.app.db_layer.orm_models.attendance import Attendance, AttendanceEntry
+from src.app.db_layer.orm_models.attendance import AttendanceEntry
 from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, UpdatePracticeInput
+from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, MarkActualAttendanceInput, UpdatePracticeInput
     
 async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
 
@@ -49,7 +49,9 @@ async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt
     ]
     
     
-async def create_practice_service(session: AsyncSession, team_id: UUID, payload: CreatePracticeInput):
+async def create_practice_service(
+    session: AsyncSession, team_id: UUID, payload: CreatePracticeInput
+) -> Practice:
     practice = Practice(
         team_id=team_id,
         start_time=payload.start_time,
@@ -57,17 +59,11 @@ async def create_practice_service(session: AsyncSession, team_id: UUID, payload:
         location=payload.location,
         description=payload.description,
     )
-    
     session.add(practice)
     await session.flush()
-    
-    stmt = select(UserRole.user_id).where(UserRole.team_id == team_id)
-    result = await session.execute(stmt)
-    user_ids = result.scalars().all()
 
-    attendance = Attendance(practice_id=practice.id, notes=None)
-    session.add(attendance)
-    await session.flush()
+    stmt = select(UserRole.user_id).where(UserRole.team_id == team_id)
+    user_ids = (await session.execute(stmt)).scalars().all()
 
     session.add_all(
         AttendanceEntry(practice_id=practice.id, user_id=uid) for uid in user_ids
@@ -142,3 +138,44 @@ async def mark_planned_attendance_service(
         AttendanceEntry.user_id == user_id,
     )
     return (await session.execute(entry_stmt)).scalar_one()
+
+
+async def mark_actual_attendance_service(
+    session: AsyncSession,
+    team_id: UUID,
+    practice_id: UUID,
+    payload: MarkActualAttendanceInput,
+) -> list[AttendanceEntry]:
+    practice_stmt = select(Practice.id).where(
+        Practice.id == practice_id,
+        Practice.team_id == team_id,
+    )
+    practice = (await session.execute(practice_stmt)).scalar_one_or_none()
+    if practice is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Practice not found")
+
+    if not payload.entries:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No entries provided")
+
+    params = [
+        {
+            "practice_id": practice_id,
+            "user_id": entry.user_id,
+            "actual_attendance": entry.actual_attendance,
+        }
+        for entry in payload.entries
+    ]
+
+    result = await session.execute(update(AttendanceEntry), params)
+
+    if result.rowcount != len(params):
+        await session.rollback()
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail="One or more users are not part of this practice's attendance list",
+        )
+
+    await session.commit()
+
+    entries_stmt = select(AttendanceEntry).where(AttendanceEntry.practice_id == practice_id)
+    return (await session.execute(entries_stmt)).scalars().all()

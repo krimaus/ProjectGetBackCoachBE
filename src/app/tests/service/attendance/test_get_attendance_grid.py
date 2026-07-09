@@ -6,7 +6,7 @@ import pytest
 from app.db_layer.orm_models.attendance import Attendance
 from app.db_layer.orm_models.practice import Practice
 from app.db_layer.orm_models.team import Team
-from app.service_layer.services.attendance.attendance_grid.service import get_attendance_grid
+from src.app.service_layer.services.attendance.service import get_attendance_grid
 
 @pytest.mark.asyncio
 async def test_get_attendance_grid(async_session):

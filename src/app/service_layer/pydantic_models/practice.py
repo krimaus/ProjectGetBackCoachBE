@@ -81,3 +81,20 @@ class UpdatePracticeInput(BaseModel):
         if self.end_time <= self.start_time:
             raise ValueError("end_time must be after start_time")
         return self
+    
+    
+class ActualAttendanceEntry(BaseModel):
+    user_id: UUID4
+    actual_attendance: bool
+
+
+class MarkActualAttendanceInput(BaseModel):
+    entries: list[ActualAttendanceEntry]
+
+    @field_validator("entries")
+    @classmethod
+    def no_duplicate_users(cls, v):
+        ids = [e.user_id for e in v]
+        if len(ids) != len(set(ids)):
+            raise ValueError("duplicate user_id in entries")
+        return v

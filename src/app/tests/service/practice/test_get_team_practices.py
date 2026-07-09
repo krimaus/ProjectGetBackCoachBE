@@ -4,7 +4,7 @@ import pytest
 
 from app.db_layer.orm_models.practice import Practice
 from app.db_layer.orm_models.team import Team
-from app.service_layer.services.practice.team_practice_listing.service import get_team_practices
+from src.app.service_layer.services.practice.service import get_team_practices
 
 
 @pytest.mark.asyncio
