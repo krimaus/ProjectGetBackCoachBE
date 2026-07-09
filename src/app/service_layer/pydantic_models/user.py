@@ -15,6 +15,13 @@ class CreateUserInput(BaseModel):
     last_name: str
     username: str
     password: str
+    
+    
+class UpdateUserInput(BaseModel):
+    first_name: str
+    last_name: str
+    username: str
+
 
 class UserItem(BaseModel):
     id: UUID4
