@@ -211,3 +211,22 @@ async def change_team_ownership_service(session: AsyncSession, team_id: UUID, ne
     await session.commit()
     await session.refresh(new_owner)
     return new_owner
+
+
+async def search_team_by_name_service(session: AsyncSession, name_query: str) -> list[TeamItem]:
+    stmt = (
+    select(Team)
+    .where(
+        Team.name.ilike(f"{name_query}%")
+    )
+    .order_by(Team.name, Team.id)
+)
+    result = await session.execute(stmt)
+    teams = result.scalars().all()
+    
+    return [
+        TeamItem(
+            id=team.id,
+            name=team.name
+        ) for team in teams
+    ]

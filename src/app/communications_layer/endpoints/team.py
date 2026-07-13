@@ -1,6 +1,7 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,7 +10,7 @@ from app.service_layer.pydantic_models.team import AddMembersInput, ChangeNameIn
 from app.service_layer.services import get_team_names
 from src.app.auth_util import user_dependency
 from src.app.service_layer.services.auth.service import check_user_role_in_team
-from src.app.service_layer.services.team.service import add_team_members_service, change_member_rank_service, change_team_ownership_service, rename_team_service, create_team_service, delete_team_service, remove_team_members_service
+from src.app.service_layer.services.team.service import add_team_members_service, change_member_rank_service, change_team_ownership_service, rename_team_service, create_team_service, delete_team_service, remove_team_members_service, search_team_by_name_service
 from src.app.service_layer.services.user.service import get_team_members_service
 
 
@@ -122,6 +123,23 @@ async def change_team_ownership(
             detail='Insufficient permissions'
         )
     return await change_team_ownership_service(session, team_id, user_id)
+
+
+@teams_router.get(
+    "/search/{name_query}",
+    status_code=status.HTTP_200_OK
+)
+async def search_team_by_name(
+    name_query: Annotated[str, Path(min_length=2, max_length=100)],
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+) -> list[TeamItem]:
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    return await search_team_by_name_service(session, name_query)
 
 
 @teams_router.get(
