@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import HTTPException
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.exc import IntegrityError
 from starlette import status
 
@@ -40,6 +40,7 @@ async def create_user_service(session: AsyncSession, payload: CreateUserInput) -
         id=user.id,
         first_name=user.first_name,
         last_name=user.last_name,
+        full_name=user.full_name,
         username=user.username,
     )
 
@@ -63,6 +64,7 @@ async def get_team_members_service(session: AsyncSession, team_id: uuid.UUID) ->
                 id=m.id,
                 first_name=m.first_name,
                 last_name=m.last_name,
+                full_name=m.full_name,
                 username=m.username
             )
             for m in members
@@ -105,11 +107,12 @@ async def update_user_service(session: AsyncSession, user_id: uuid.UUID, payload
         id=user.id,
         first_name=user.first_name,
         last_name=user.last_name,
+        full_name=user.full_name,
         username=user.username
     )
     
     
-async def get_user_service(session: AsyncSession, user_id: uuid.UUID) -> UserItem:
+async def get_user_by_id_service(session: AsyncSession, user_id: uuid.UUID) -> UserItem:
     stmt = select(User).where(User.id == user_id)
     
     result = await session.execute(stmt)
@@ -119,6 +122,7 @@ async def get_user_service(session: AsyncSession, user_id: uuid.UUID) -> UserIte
         id=user.id,
         first_name=user.first_name,
         last_name=user.last_name,
+        full_name=user.full_name,
         username=user.username
     )
     
@@ -135,4 +139,50 @@ async def get_user_roles_service(session: AsyncSession, user_id: uuid.UUID) -> U
             user_id=role.user_id,
             role=role.role
         ) for role in user_roles
+    ]
+    
+    
+async def get_user_by_name_service(session: AsyncSession, name: str) -> UserItem:
+    stmt = select(User).where(User.full_name == name)
+    
+    result = await session.execute(stmt)
+    user = result.scalar_one_or_none()
+    
+    if user is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail=f"User not found",
+        )
+        
+    return UserItem(
+        id=user.id,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        full_name=user.full_name,
+        username=user.username
+    )
+    
+    
+async def search_user_by_name_service(session: AsyncSession, name_query: str) -> list[UserItem]:
+    stmt = (
+    select(User)
+    .where(
+        or_(
+            User.first_name.ilike(f"{name_query}%"),
+            User.last_name.ilike(f"{name_query}%"),
+        )
+    )
+    .order_by(User.last_name, User.first_name, User.id)
+)
+    result = await session.execute(stmt)
+    users = result.scalars().all()
+    
+    return [
+        UserItem(
+            id=user.id,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            full_name=user.full_name,
+            username=user.username
+        ) for user in users
     ]

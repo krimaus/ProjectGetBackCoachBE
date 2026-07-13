@@ -17,7 +17,7 @@ class Practice(IdBearer, Base):
     start_time: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True))
     end_time: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True))
     location: Mapped[str]
-    description: Mapped[str]
+    notes: Mapped[str] = mapped_column(nullable=True)
 
 
 
