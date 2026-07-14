@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
 from app.service_layer.services import get_team_practices
 from src.app.auth_util import user_dependency
-from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, MarkActualAttendanceInput, TeamPracticeListingItem, UpdatePracticeInput
+from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, TeamPracticeListingItem, UpdatePracticeInput
 from src.app.service_layer.services.auth.service import check_user_role_in_team
-from src.app.service_layer.services.practice.service import create_practice_service, delete_practice_service, mark_actual_attendance_service, mark_planned_attendance_service, update_practice_service
+from src.app.service_layer.services.practice.service import create_practice_service, create_recurring_practice_service, delete_practice_service, mark_actual_attendance_service, mark_planned_attendance_service, update_practice_service
 
 practice_router = APIRouter(prefix="/practice", tags=["practice"])
 
@@ -60,6 +60,30 @@ async def create_practice(
         )
         
     return await create_practice_service(session, team_id, payload)
+
+
+@practice_router.post(
+    "/{team_id}/recurring",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_recurring_practice(
+    team_id: UUID,
+    payload: CreateRecurringPracticeInput,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed",
+        )
+    if await check_user_role_in_team(session, user["id"], team_id) not in ("OWNER"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+
+    return await create_recurring_practice_service(session, team_id, payload)
 
 
 @practice_router.put(

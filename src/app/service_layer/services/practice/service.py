@@ -10,8 +10,9 @@ from starlette import status
 
 from app.service_layer.pydantic_models import PracticeItem, TeamPracticeListingItem
 from src.app.db_layer.orm_models.attendance import AttendanceEntry
+from src.app.db_layer.orm_models.practice import PracticeSeries
 from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, MarkActualAttendanceInput, UpdatePracticeInput
+from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, UpdatePracticeInput
     
 async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
 
@@ -179,3 +180,60 @@ async def mark_actual_attendance_service(
 
     entries_stmt = select(AttendanceEntry).where(AttendanceEntry.practice_id == practice_id)
     return (await session.execute(entries_stmt)).scalars().all()
+
+
+async def create_recurring_practice_service(
+    session: AsyncSession, team_id: UUID, payload: CreateRecurringPracticeInput
+) -> list[Practice]:
+    series = PracticeSeries(
+        team_id=team_id,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
+        days_of_week=payload.days_of_week,
+        start_time=payload.start_time,
+        end_time=payload.end_time,
+        location=payload.location,
+        description=payload.description,
+    )
+    session.add(series)
+    await session.flush()
+
+    now = dt.datetime.now(dt.timezone.utc)
+    practices: list[Practice] = []
+    current = payload.start_date
+    while current <= payload.end_date:
+        if current.weekday() in payload.days_of_week:
+            occurrence_start = dt.datetime.combine(
+                current, payload.start_time, tzinfo=dt.timezone.utc
+            )
+            if occurrence_start > now:
+                practices.append(
+                    Practice(
+                        team_id=team_id,
+                        series_id=series.id,
+                        start_time=occurrence_start,
+                        end_time=dt.datetime.combine(
+                            current, payload.end_time, tzinfo=dt.timezone.utc
+                        ),
+                        location=payload.location,
+                        description=payload.description,
+                    )
+                )
+        current += dt.timedelta(days=1)
+
+    session.add_all(practices)
+    await session.flush()
+    
+    stmt = select(UserRole.user_id).where(UserRole.team_id == team_id)
+    user_ids = (await session.execute(stmt)).scalars().all()
+
+    session.add_all(
+        AttendanceEntry(practice_id=p.id, user_id=uid)
+        for p in practices
+        for uid in user_ids
+    )
+
+    await session.commit()
+    for p in practices:
+        await session.refresh(p)
+    return practices
