@@ -128,3 +128,37 @@ class CreateRecurringPracticeInput(BaseModel):
                 f"date range cannot exceed {MAX_RECURRING_PRACTICE_SPAN_DAYS} days"
             )
         return self
+    
+    
+class UpdateRecurringPracticeInput(BaseModel):
+    days_of_week: list[int] = Field(..., min_length=1)  # 0=Mon..6=Sun
+    start_date: dt.date
+    end_date: dt.date
+    start_time: dt.time
+    end_time: dt.time
+    location: str | None = None
+    description: str | None = None
+
+    @field_validator("days_of_week")
+    @classmethod
+    def validate_days(cls, v: list[int]) -> list[int]:
+        if not all(0 <= d <= 6 for d in v):
+            raise ValueError("days_of_week must be 0 (Mon) through 6 (Sun)")
+        return sorted(set(v))
+
+    @field_validator("start_time", "end_time")
+    @classmethod
+    def must_be_utc(cls, v: dt.time) -> dt.time:
+        if v.utcoffset() != dt.timedelta(0):
+            raise ValueError("start_time/end_time must be UTC")
+        return v
+
+    @model_validator(mode="after")
+    def validate_date_range(self) -> "CreateRecurringPracticeInput":
+        if self.end_date < self.start_date:
+            raise ValueError("end_date must not be before start_date")
+        if (self.end_date - self.start_date).days > MAX_RECURRING_PRACTICE_SPAN_DAYS:
+            raise ValueError(
+                f"date range cannot exceed {MAX_RECURRING_PRACTICE_SPAN_DAYS} days"
+            )
+        return self

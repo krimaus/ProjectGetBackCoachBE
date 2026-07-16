@@ -9,6 +9,7 @@ from app.db import get_session
 from app.service_layer.pydantic_models.team import AddMembersInput, ChangeNameInput, ChangeRankInput, CreateTeamInput, DeleteMembersInput, TeamItem
 from app.service_layer.services import get_team_names
 from src.app.auth_util import user_dependency
+from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from src.app.service_layer.services.auth.service import check_user_role_in_team
 from src.app.service_layer.services.team.service import add_team_members_service, change_member_rank_service, change_team_ownership_service, rename_team_service, create_team_service, delete_team_service, remove_team_members_service, search_team_by_name_service
 from src.app.service_layer.services.user.service import get_team_members_service
@@ -34,8 +35,8 @@ async def create_team(
     return await create_team_service(session, user, payload)
 
 
-@teams_router.post(
-    "/{team_id}/members",
+@teams_router.patch(
+    "/{team_id}/members/add",
     status_code=status.HTTP_200_OK,
     response_model=list[UUID],
 )
@@ -45,15 +46,20 @@ async def add_team_members(
     user: user_dependency,
     session: AsyncSession = Depends(get_session)
 ):
-    if user is None or await check_user_role_in_team(session, user['id'], team_id) not in ['OWNER', 'COACH']:
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER, UserRoleEnum.COACH):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail='Insufficient permissions'
+        )
     return await add_team_members_service(session, team_id, payload)
 
 
-@teams_router.put(
+@teams_router.patch(
     "/{team_id}",
     status_code=status.HTTP_200_OK
 )
@@ -68,7 +74,7 @@ async def rename_team(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    if await check_user_role_in_team(session, user['id'], team_id) != 'OWNER':
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER,):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail='Insufficient permissions'
@@ -77,7 +83,7 @@ async def rename_team(
     return await rename_team_service(session, team_id, payload)
 
 
-@teams_router.put(
+@teams_router.patch(
     "/{team_id}/{user_id}/rank",
     status_code=status.HTTP_200_OK
 )
@@ -93,7 +99,7 @@ async def change_member_rank(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    if await check_user_role_in_team(session, user['id'], team_id) != 'OWNER':
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER,):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail='Insufficient permissions'
@@ -102,7 +108,7 @@ async def change_member_rank(
     return await change_member_rank_service(session, team_id, user_id, payload)
 
 
-@teams_router.put(
+@teams_router.patch(
     "/{team_id}/{user_id}/owner",
     status_code=status.HTTP_200_OK
 )
@@ -117,12 +123,36 @@ async def change_team_ownership(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    if await check_user_role_in_team(session, user['id'], team_id) != 'OWNER':
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER,):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail='Insufficient permissions'
         )
     return await change_team_ownership_service(session, team_id, user_id)
+
+
+@teams_router.patch(
+    "/{team_id}/members/remove",
+    status_code=status.HTTP_200_OK
+)
+async def remove_team_members(
+    team_id: UUID,
+    payload: DeleteMembersInput,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER, UserRoleEnum.COACH):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail='Insufficient permissions'
+        )
+    
+    await remove_team_members_service(session, team_id, payload)
 
 
 @teams_router.get(
@@ -185,29 +215,15 @@ async def delete_team(
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
 ):
-    if user is None or await check_user_role_in_team(session, user['id'], team_id) != 'OWNER':
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
+        )
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER,):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail='Insufficient permissions'
         )
     
     await delete_team_service(session, team_id)
-        
-
-@teams_router.delete(
-    "/{team_id}/members",
-    status_code=status.HTTP_200_OK
-)
-async def remove_team_members(
-    team_id: UUID,
-    payload: DeleteMembersInput,
-    user: user_dependency,
-    session: AsyncSession = Depends(get_session),
-):
-    if user is None or await check_user_role_in_team(session, user['id'], team_id) not in ['OWNER', 'COACH']:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Authentication failed'
-        )
-    
-    await remove_team_members_service(session, team_id, payload)

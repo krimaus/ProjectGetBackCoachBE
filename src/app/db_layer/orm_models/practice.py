@@ -18,7 +18,7 @@ class Practice(IdBearer, Base):
     location: Mapped[str]
     description: Mapped[str | None] = mapped_column(nullable=True)
     series_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("practice_series.id"), nullable=True
+        ForeignKey("practice_series.id", ondelete="CASCADE"), nullable=True
     )
 
 

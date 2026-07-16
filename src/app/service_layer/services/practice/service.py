@@ -237,3 +237,111 @@ async def create_recurring_practice_service(
     for p in practices:
         await session.refresh(p)
     return practices
+
+
+
+async def update_recurring_practice_service(
+    session: AsyncSession, team_id: UUID, series_id: UUID, payload: CreateRecurringPracticeInput
+) -> list[Practice]:
+    stmt = select(PracticeSeries).where(PracticeSeries.id == series_id, PracticeSeries.team_id == team_id)
+    
+    result = await session.execute(stmt)
+    series = result.scalar_one_or_none()
+    
+    if series is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail="Practice series not found for team",
+        )
+
+    now = dt.datetime.now(dt.timezone.utc)
+
+    future_practices_stmt = select(Practice.id).where(
+        Practice.series_id == series_id, Practice.start_time > now
+    )
+    result = await session.execute(future_practices_stmt)
+    future_practice_ids = result.scalars().all()
+    
+    if future_practice_ids:
+        await session.execute(
+            delete(AttendanceEntry).where(AttendanceEntry.practice_id.in_(future_practice_ids))
+        )
+        await session.execute(
+            delete(Practice).where(Practice.id.in_(future_practice_ids))
+        )
+        
+    series.start_date = payload.start_date
+    series.end_date = payload.end_date
+    series.days_of_week = payload.days_of_week
+    series.start_time = payload.start_time
+    series.end_time = payload.end_time
+    series.location = payload.location
+    series.description = payload.description
+    await session.flush()
+    
+    practices: list[Practice] = []
+    current = payload.start_date
+    while current <= payload.end_date:
+        if current.weekday() in payload.days_of_week:
+            occurrence_start = dt.datetime.combine(
+                current, payload.start_time, tzinfo=dt.timezone.utc
+            )
+            if occurrence_start > now:
+                practices.append(
+                    Practice(
+                        team_id=team_id,
+                        series_id=series.id,
+                        start_time=occurrence_start,
+                        end_time=dt.datetime.combine(
+                            current, payload.end_time, tzinfo=dt.timezone.utc
+                        ),
+                        location=payload.location,
+                        description=payload.description,
+                    )
+                )
+        current += dt.timedelta(days=1)
+
+    session.add_all(practices)
+    await session.flush()
+
+    user_ids_stmt = select(UserRole.user_id).where(UserRole.team_id == team_id)
+    result = await session.execute(user_ids_stmt)
+    user_ids = result.scalars().all()
+
+    session.add_all(
+        AttendanceEntry(practice_id=p.id, user_id=uid)
+        for p in practices
+        for uid in user_ids
+    )
+
+    await session.commit()
+    for p in practices:
+        await session.refresh(p)
+    return practices
+
+
+async def delete_practice_series_service(
+    session: AsyncSession, team_id: UUID, series_id: UUID
+) -> None:
+    stmt = select(PracticeSeries).where(
+        PracticeSeries.id == series_id, PracticeSeries.team_id == team_id
+    )
+    series = (await session.execute(stmt)).scalar_one_or_none()
+    if series is None:
+        raise ValueError(f"Practice series not found for team")
+
+    await session.delete(series)
+    await session.commit()
+    
+    
+async def get_practice_series_service(
+    session: AsyncSession, team_id: UUID
+) -> None:
+    stmt = select(PracticeSeries).where(PracticeSeries.team_id == team_id)
+    result = await session.execute(stmt)
+    series = result.scalars().all()
+    
+    if series is None:
+        raise ValueError(f"Practice series not found for team")
+
+    return series

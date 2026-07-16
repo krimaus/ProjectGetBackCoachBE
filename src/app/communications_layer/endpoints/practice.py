@@ -8,9 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
 from app.service_layer.services import get_team_practices
 from src.app.auth_util import user_dependency
-from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, TeamPracticeListingItem, UpdatePracticeInput
+from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, TeamPracticeListingItem, UpdatePracticeInput, UpdateRecurringPracticeInput
 from src.app.service_layer.services.auth.service import check_user_role_in_team
-from src.app.service_layer.services.practice.service import create_practice_service, create_recurring_practice_service, delete_practice_service, mark_actual_attendance_service, mark_planned_attendance_service, update_practice_service
+from src.app.service_layer.services.practice.service import create_practice_service, create_recurring_practice_service, delete_practice_series_service, delete_practice_service, get_practice_series_service, mark_actual_attendance_service, mark_planned_attendance_service, update_practice_service, update_recurring_practice_service
 
 practice_router = APIRouter(prefix="/practice", tags=["practice"])
 
@@ -38,6 +39,29 @@ async def get_team_practice(
     return await get_team_practices(session, team_id, time_from, time_to)
 
 
+@practice_router.get(
+    "/{team_id}/recurring",
+    status_code=status.HTTP_201_CREATED,
+)
+async def get_recurring_practice_for_team(
+    team_id: UUID,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed",
+        )
+    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,) :
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+
+    return await get_practice_series_service(session, team_id)
+
+
 @practice_router.post(
     "/{team_id}",
     status_code=status.HTTP_201_CREATED
@@ -53,7 +77,7 @@ async def create_practice(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    if await check_user_role_in_team(session, user['id'], team_id) not in ("OWNER", "COACH"):
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER, UserRoleEnum.COACH):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail='Insufficient permissions'
@@ -77,13 +101,38 @@ async def create_recurring_practice(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",
         )
-    if await check_user_role_in_team(session, user["id"], team_id) not in ("OWNER"):
+    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient permissions",
         )
 
     return await create_recurring_practice_service(session, team_id, payload)
+
+
+@practice_router.put(
+    "/{team_id}/recurring/{series_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def update_recurring_practice(
+    team_id: UUID,
+    series_id: UUID,
+    payload: UpdateRecurringPracticeInput,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed",
+        )
+    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+
+    return await update_recurring_practice_service(session, team_id, series_id, payload)
 
 
 @practice_router.put(
@@ -102,7 +151,7 @@ async def update_practice(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    if await check_user_role_in_team(session, user['id'], team_id) not in ("OWNER", "COACH"):
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER, UserRoleEnum.COACH):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail='Insufficient permissions'
@@ -145,7 +194,7 @@ async def mark_actual_attendance(
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='Authentication failed')
 
-    if await check_user_role_in_team(session, user['id'], team_id) not in ["OWNER", "COACH"]:
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER, UserRoleEnum.COACH):
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail='Insufficient permissions')
 
     return await mark_actual_attendance_service(session, team_id, practice_id, payload)
@@ -167,10 +216,34 @@ async def delete_practice(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    if await check_user_role_in_team(session, user['id'], team_id) not in ("OWNER", "COACH"):
+    if await check_user_role_in_team(session, user['id'], team_id) not in (UserRoleEnum.OWNER, UserRoleEnum.COACH):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail='Insufficient permissions'
         )
     
     await delete_practice_service(session, team_id, practice_id)
+    
+
+@practice_router.delete(
+    "/{team_id}/recurring/{series_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def delete_recurring_practice(
+    team_id: UUID,
+    series_id: UUID,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed",
+        )
+    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+
+    return await delete_practice_series_service(session, team_id, series_id)
