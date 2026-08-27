@@ -154,6 +154,9 @@ async def mark_actual_attendance_service(
     practice = (await session.execute(practice_stmt)).scalar_one_or_none()
     if practice is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Practice not found")
+    
+    if practice.end_date > dt.datetime.now(dt.timezone.utc):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Practice not finished")
 
     if not payload.entries:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail="No entries provided")

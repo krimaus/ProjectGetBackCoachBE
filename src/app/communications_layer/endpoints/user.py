@@ -8,10 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
 from app.service_layer.services import create_user_service
 from src.app.service_layer.pydantic_models import UserItem
+from src.app.service_layer.pydantic_models.enums.invite_status import InviteStatus
+from src.app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
 from src.app.service_layer.pydantic_models.user import CreateUserInput, UpdateUserInput
 from src.app.auth_util import user_dependency
 from src.app.service_layer.pydantic_models.user_role import UserRoleItem
-from src.app.service_layer.services.user.service import delete_user_service, get_user_by_name_service, get_user_roles_service, get_user_by_id_service, search_user_by_name_service, update_user_service
+from src.app.service_layer.services.user.service import delete_join_request_service, get_user_invites_service, leave_team_service, resolve_team_invite_service, delete_user_service, get_user_by_name_service, get_user_roles_service, get_user_by_id_service, request_join_team_service, search_user_by_name_service, update_user_service
 
 users_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -102,6 +104,23 @@ async def get_user_roles(
     return await get_user_roles_service(session, user_id)
 
 
+@users_router.get(
+    "/invites",
+    status_code=status.HTTP_200_OK
+)
+async def get_user_invites(
+    invite_status: InviteStatus,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session),
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    return await get_user_invites_service(session, user['id'], invite_status)
+
+
 @users_router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
@@ -112,6 +131,43 @@ async def create_user(
     session: AsyncSession = Depends(get_session),
 ):
     return await create_user_service(session, payload)
+
+
+@users_router.post(
+    "/{team_id}/join",
+    status_code=status.HTTP_201_CREATED,
+)
+async def request_join_team(
+    team_id: UUID,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session)
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    await request_join_team_service(session, team_id, user['id'])
+
+
+@users_router.patch(
+    "/{team_id}/invite/resolve",
+    status_code=status.HTTP_200_OK
+)
+async def resolve_team_invite(
+    team_id: UUID,
+    user: user_dependency,
+    decision: MembershipApplicationDecisionEnum,
+    session: AsyncSession = Depends(get_session)
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    
+    return await resolve_team_invite_service(session, team_id, user['id'], decision)
+    
 
 
 @users_router.patch(
@@ -147,3 +203,39 @@ async def delete_user(
         )
     
     await delete_user_service(session, user['id'])
+    
+    
+@users_router.delete(
+    "/{team_id}/invite",
+    status_code=status.HTTP_200_OK
+)
+async def delete_join_request(
+    team_id: UUID,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session)
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    
+    await delete_join_request_service(session, team_id, user['id'])
+    
+    
+@users_router.delete(
+    "/{team_id}/leave",
+    status_code=status.HTTP_200_OK
+)
+async def leave_team(
+    team_id: UUID,
+    user: user_dependency,
+    session: AsyncSession = Depends(get_session)
+):
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Authentication failed'
+        )
+    
+    await leave_team_service(session, team_id, user['id'])

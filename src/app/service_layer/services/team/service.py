@@ -6,13 +6,16 @@ from starlette import status
 from app.db_layer.orm_models.team import Team
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, delete, or_, select
 
 from app.service_layer.pydantic_models import TeamItem
 from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from src.app.db_layer.orm_models.invite import Invite
 from src.app.db_layer.orm_models.user import User
 from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.team import AddMembersInput, ChangeNameInput, ChangeRankInput, CreateTeamInput, DeleteMembersInput
+from src.app.service_layer.pydantic_models.enums.invite_status import InviteStatus
+from src.app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
+from src.app.service_layer.pydantic_models.team import DeleteInviteInput, InviteMembersInput, ChangeNameInput, ChangeRankInput, CreateTeamInput, DeleteMembersInput
 
 
 async def get_team_names(session: AsyncSession) -> list[TeamItem]:
@@ -55,7 +58,7 @@ async def create_team_service(session: AsyncSession, user: dict, payload: Create
         name=team.name
     )
     
-async def add_team_members_service(session: AsyncSession, team_id: UUID, payload: AddMembersInput) -> list[UUID]:
+async def invite_team_members_service(session: AsyncSession, team_id: UUID, payload: InviteMembersInput) -> list[UUID]:
     requested_ids = set(payload.id_list)
 
     stmt = select(User.id).where(User.id.in_(requested_ids))
@@ -82,12 +85,26 @@ async def add_team_members_service(session: AsyncSession, team_id: UUID, payload
             detail=f"Users already on team: {sorted(already_members)}"
         )
 
-    user_roles = [
-        UserRole(user_id=user_id, team_id=team_id, role=UserRoleEnum.MEMBER)
+    stmt = select(Invite).where(
+        Invite.team_id == team_id,
+        Invite.user_id.in_(payload.id_list),
+        or_(
+            Invite.player_consent == None,
+            Invite.team_consent == None
+        )
+    )
+    already_invited = result.scalars().all()
+    
+    if already_invited:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Players already invited or requesting join {[invite.user_id for invite in already_invited]}"
+        )
+        
+    session.add_all(
+        Invite(team_id=team_id, user_id=user_id, player_consent=None, team_consent=True)
         for user_id in existing_ids
-    ]
-
-    session.add_all(user_roles)
+    )
     await session.commit()
 
     return list(existing_ids)
@@ -132,7 +149,6 @@ async def remove_team_members_service(
     result = await session.execute(stmt)
 
     if result.rowcount != len(target_ids):
-        await session.rollback()
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
             detail="One or more users are not members of this team",
@@ -180,6 +196,7 @@ async def change_member_rank_service(session: AsyncSession, team_id: UUID, user_
     await session.refresh(user_role)
 
     return user_role
+
 
 async def change_team_ownership_service(session: AsyncSession, team_id: UUID, new_owner_id: UUID):
     stmt = select(UserRole).where(
@@ -230,3 +247,109 @@ async def search_team_by_name_service(session: AsyncSession, name_query: str) ->
             name=team.name
         ) for team in teams
     ]
+    
+    
+async def resolve_join_request_service(session: AsyncSession, team_id: UUID, user_id: UUID, decision: MembershipApplicationDecisionEnum):
+    stmt = select(UserRole.user_id).where(
+        UserRole.team_id == team_id,
+        UserRole.user_id == user_id,
+    )
+    result = await session.execute(stmt)
+    already_member = result.scalar_one_or_none()
+
+    if already_member:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"User already on team"
+        )
+        
+    stmt = select(Invite).where(
+        Invite.team_id == team_id,
+        Invite.user_id == user_id,
+        Invite.team_consent == None
+    )
+    result = await session.execute(stmt)
+    invite = result.scalar_one_or_none()
+    
+    if invite is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Invite not found"
+        )
+        
+    if decision == MembershipApplicationDecisionEnum.ACCEPT:
+        invite.team_consent = True
+        
+        new_role = UserRole(
+                user_id=user_id,
+                team_id=team_id,
+                role=UserRoleEnum.MEMBER
+            )
+            
+        session.add(new_role)
+        await session.commit()
+        
+        return new_role
+    else:
+        invite.team_consent = False
+        await session.commit()
+        return None
+    
+    
+async def delete_invite_service(session: AsyncSession, team_id: UUID, payload: DeleteInviteInput):
+    stmt = select(Invite).where(
+        Invite.team_id == team_id,
+        Invite.user_id.in_(payload.id_list),
+    )
+    result = await session.execute(stmt)
+    invites = result.scalars().all()
+    
+    if invites is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Invite not found"
+        )
+        
+    consent = [invite.team_consent for invite in invites]
+        
+    if None in consent:
+         raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Invite must be resolved or created by team"
+        )
+        
+    stmt = delete(Invite).where(
+        Invite.team_id == team_id,
+        Invite.user_id.in_(payload.id_list),
+    )
+    await session.execute(stmt)
+    
+    
+async def get_team_invites_service(session: AsyncSession, team_id: UUID, invite_status: InviteStatus):
+    stmt = select(Invite).where(
+        Invite.team_id == team_id,
+    )
+    
+    if invite_status == InviteStatus.ACTIVE:
+        stmt = stmt.where(
+            or_(
+                Invite.player_consent is None,
+                Invite.team_consent is None
+            )
+        )
+    elif invite_status== InviteStatus.RESOLVED:
+        stmt = stmt.where(
+            Invite.player_consent is not None,
+            Invite.team_consent is not None
+        )
+    
+    result = await session.execute(stmt)
+    invites = result.scalars().all()
+    
+    if invites is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Invite not found"
+        )
+        
+    return invites

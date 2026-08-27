@@ -44,6 +44,7 @@ def create_test_database():
             )
 
     conn.close()
+  
     
 def drop_test_database():
     conn = psycopg2.connect(
@@ -75,11 +76,13 @@ def drop_test_database():
 
     conn.close()
     
+    
 @pytest.fixture(scope="session")
 def setup_test_db():
     create_test_database()
     yield
     drop_test_database()
+
 
 @pytest.fixture(scope="session")
 async def engine(setup_test_db):

@@ -21,7 +21,7 @@ class CreateTeamInput(BaseModel):
     name: str
     
     
-class AddMembersInput(BaseModel):
+class InviteMembersInput(BaseModel):
     id_list: list[UUID]
     
     
@@ -35,3 +35,7 @@ class ChangeNameInput(BaseModel):
     
 class ChangeRankInput(BaseModel):
     role: Literal[UserRoleEnum.MEMBER, UserRoleEnum.COACH]
+    
+    
+class DeleteInviteInput(BaseModel):
+    id_list: list[UUID]

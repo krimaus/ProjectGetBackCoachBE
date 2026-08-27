@@ -11,6 +11,9 @@ from app.service_layer.pydantic_models import UserItem
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from src.app.db_layer.orm_models.invite import Invite
+from src.app.service_layer.pydantic_models.enums.invite_status import InviteStatus
+from src.app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
 from src.app.service_layer.pydantic_models.user import CreateUserInput, UpdateUserInput
 from app.auth_util import password_hash
 from src.app.service_layer.pydantic_models.user_role import UserRoleItem
@@ -186,3 +189,171 @@ async def search_user_by_name_service(session: AsyncSession, name_query: str) ->
             username=user.username
         ) for user in users
     ]
+    
+    
+async def request_join_team_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID):
+    stmt = select(UserRole.user_id).where(
+        UserRole.team_id == team_id,
+        UserRole.user_id == user_id,
+    )
+    result = await session.execute(stmt)
+    already_member = result.scalar_one_or_none()
+
+    if already_member:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"User already on team"
+        )
+
+    stmt = select(Invite).where(
+        Invite.team_id == team_id,
+        Invite.user_id == user_id,
+        or_(
+            Invite.player_consent == None,
+            Invite.team_consent == None
+        )
+    )
+    result = await session.execute(stmt)
+    already_invited = result.scalar_one_or_none()
+    
+    if already_invited:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Player already invited or requesting join"
+        )
+        
+    session.add_all(
+        Invite(team_id=team_id, user_id=user_id, player_consent=True, team_consent=None)
+    )
+    await session.commit()
+    
+    
+async def resolve_team_invite_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID, decision: MembershipApplicationDecisionEnum):
+    stmt = select(UserRole.user_id).where(
+        UserRole.team_id == team_id,
+        UserRole.user_id == user_id,
+    )
+    result = await session.execute(stmt)
+    already_member = result.scalar_one_or_none()
+
+    if already_member:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"User already on team"
+        )
+        
+    stmt = select(Invite).where(
+        Invite.team_id == team_id,
+        Invite.user_id == user_id,
+        Invite.player_consent == None
+    )
+    result = await session.execute(stmt)
+    invite = result.scalar_one_or_none()
+    
+    if invite is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Invite not found"
+        )
+        
+    if decision == MembershipApplicationDecisionEnum.ACCEPT:
+        invite.player_consent = True
+            
+        new_role = UserRole(
+                user_id=user_id,
+                team_id=team_id,
+                role=UserRoleEnum.MEMBER
+            )
+            
+        session.add(new_role)
+        await session.commit()
+        
+        return new_role
+    else:
+        invite.player_consent = False
+        await session.commit()
+        return None
+    
+    
+async def delete_join_request_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID):
+    stmt = select(Invite).where(
+        Invite.team_id == team_id,
+        Invite.user_id == user_id,
+    )
+    result = await session.execute(stmt)
+    invite = result.scalar_one_or_none()
+    
+    if invite is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Invite not found"
+        )
+    if invite.player_consent is None:
+         raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Invite must be resolved or created by user"
+        )
+        
+    stmt = delete(Invite).where(
+        Invite.team_id == team_id,
+        Invite.user_id == user_id,
+    )
+    await session.execute(stmt)
+        
+        
+async def get_user_invites_service(session: AsyncSession, user_id: uuid.UUID, invite_status: InviteStatus):
+    stmt = select(Invite).where(
+        Invite.user_id == user_id,
+    )
+    
+    if invite_status == InviteStatus.ACTIVE:
+        stmt = stmt.where(
+            or_(
+                Invite.player_consent is None,
+                Invite.team_consent is None
+            )
+        )
+    elif invite_status== InviteStatus.RESOLVED:
+        stmt = stmt.where(
+            Invite.player_consent is not None,
+            Invite.team_consent is not None
+        )
+    
+    result = await session.execute(stmt)
+    invites = result.scalars().all()
+    
+    if invites is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Invite not found"
+        )
+        
+    return invites
+
+
+async def leave_team_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID):
+    owner_stmt = select(UserRole.user_id).where(
+        UserRole.team_id == team_id,
+        UserRole.role == UserRoleEnum.OWNER,
+    )
+    owner_id = (await session.execute(owner_stmt)).scalar_one_or_none()
+
+    if owner_id is not None and owner_id == user_id:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Team owner must transfer ownership before being removed",
+        )
+
+    stmt = delete(UserRole).where(
+        UserRole.team_id == team_id,
+        UserRole.user_id == user_id,
+    )
+    result = await session.execute(stmt)
+
+    if result.rowcount != 1:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail="User is not member of team",
+        )
+
+    await session.commit()
