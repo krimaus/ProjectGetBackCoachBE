@@ -8,11 +8,11 @@ from sqlalchemy import and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from app.service_layer.pydantic_models import PracticeItem, TeamPracticeListingItem
+from app.service_layer.pydantic_models import BulkPracticeItem, TeamPracticeListingItem
 from src.app.db_layer.orm_models.attendance import AttendanceEntry
 from src.app.db_layer.orm_models.practice import PracticeSeries
 from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, UpdatePracticeInput
+from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, PracticeItem, UpdatePracticeInput
     
 async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
 
@@ -37,7 +37,7 @@ async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt
         TeamPracticeListingItem(
             date=date,
             practice=[
-                PracticeItem(
+                BulkPracticeItem(
                     id=p.id,
                     start_time=p.start_time,
                     end_time=p.end_time,
@@ -52,7 +52,7 @@ async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt
     
 async def create_practice_service(
     session: AsyncSession, team_id: UUID, payload: CreatePracticeInput
-) -> Practice:
+) -> PracticeItem:
     practice = Practice(
         team_id=team_id,
         start_time=payload.start_time,
@@ -72,7 +72,14 @@ async def create_practice_service(
 
     await session.commit()
     await session.refresh(practice)
-    return practice
+    return PracticeItem(
+        team_id=practice.team_id,
+        start_time=practice.start_time,
+        end_time=practice.end_time,
+        location=practice.location,
+        description=practice.description,
+        series_id=practice.series_id
+    )
 
 
 async def update_practice_service(session: AsyncSession, practice_id: UUID, payload: UpdatePracticeInput):

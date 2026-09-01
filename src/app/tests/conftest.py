@@ -1,6 +1,9 @@
 import os
+from unittest.mock import AsyncMock
+import uuid
 from httpx import ASGITransport
 import pytest
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
@@ -10,6 +13,9 @@ from app.main import app
 from app.db import get_session
 import psycopg2
 from psycopg2 import sql
+
+from src.app.auth_util import get_current_user
+from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 
 TEST_DB_NAME = os.getenv("TEST_DB_NAME")
 TEST_DB_USER = os.getenv("TEST_DB_USER")
@@ -131,3 +137,32 @@ async def client(async_session):
         yield ac
 
     app.dependency_overrides.clear()
+    
+
+@pytest.fixture
+def test_user():
+    return {"username": "testuser", "id": uuid.uuid4()}
+
+
+@pytest.fixture
+async def authorized_client(client, test_user):
+    async def override_get_current_user():
+        return test_user
+
+    app.dependency_overrides[get_current_user] = override_get_current_user
+
+    yield client
+
+    app.dependency_overrides.pop(get_current_user, None)
+    
+    
+@pytest.fixture
+def mock_user_role(monkeypatch):
+    def _apply(role: UserRoleEnum | None):
+        mock = AsyncMock(return_value=role)
+        monkeypatch.setattr(
+            "app.communications_layer.endpoints.practice.check_user_role_in_team",
+            mock,
+        )
+        return mock
+    return _apply

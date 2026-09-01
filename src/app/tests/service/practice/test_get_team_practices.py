@@ -13,6 +13,7 @@ async def test_get_team_practices(async_session):
     team2 = Team(id=uuid.uuid4(), name="Beta")
 
     async_session.add_all([team1, team2])
+    await async_session.flush()
     
     practice1 = Practice(
         id=uuid.uuid4(), 

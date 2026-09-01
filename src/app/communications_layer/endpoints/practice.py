@@ -9,7 +9,7 @@ from app.db import get_session
 from app.service_layer.services import get_team_practices
 from src.app.auth_util import user_dependency
 from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
-from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, TeamPracticeListingItem, UpdatePracticeInput, UpdateRecurringPracticeInput
+from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, PracticeItem, TeamPracticeListingItem, UpdatePracticeInput, UpdateRecurringPracticeInput
 from src.app.service_layer.services.auth.service import check_user_role_in_team
 from src.app.service_layer.services.practice.service import create_practice_service, create_recurring_practice_service, delete_practice_series_service, delete_practice_service, get_practice_series_service, mark_actual_attendance_service, mark_planned_attendance_service, update_practice_service, update_recurring_practice_service
 
@@ -31,6 +31,11 @@ async def get_team_practice(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
+    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,UserRoleEnum.COACH,UserRoleEnum.MEMBER) :
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
     if time_from is None:
         time_from = dt.datetime.now(dt.timezone.utc) + dt.timedelta(minutes=5)
     if time_to is None:
@@ -53,7 +58,7 @@ async def get_recurring_practice_for_team(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",
         )
-    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,) :
+    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,UserRoleEnum.COACH) :
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient permissions",
@@ -71,7 +76,7 @@ async def create_practice(
     payload: CreatePracticeInput,
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
-):
+) -> PracticeItem:
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -32,12 +32,6 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-# base_module = importlib.import_module("app.models.common.base")
-# base_class = getattr(base_module, "Base")
-# target_metadata = base_class.metadata
-# from src.app.models.common.base import Base
 target_metadata = orm_models.Base.metadata
 
 # other values from the config, defined by the needs of env.py,

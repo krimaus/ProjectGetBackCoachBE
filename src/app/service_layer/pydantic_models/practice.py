@@ -3,8 +3,16 @@ from uuid import UUID
 from pydantic import UUID4, AwareDatetime, BaseModel, Field, field_validator, model_validator
 import datetime as dt
 
-        
+
 class PracticeItem(BaseModel):
+    team_id: UUID
+    start_time: dt.datetime
+    end_time: dt.datetime
+    location: str
+    description: str | None
+    series_id: UUID | None
+        
+class BulkPracticeItem(BaseModel):
     id: UUID4
     start_time: dt.datetime
     end_time: dt.datetime
@@ -13,7 +21,7 @@ class PracticeItem(BaseModel):
 
 class TeamPracticeListingItem(BaseModel):
     date: dt.date
-    practice: list[PracticeItem]
+    practice: list[BulkPracticeItem]
     
     
 class CreatePracticeInput(BaseModel):
@@ -97,7 +105,7 @@ class MarkActualAttendanceInput(BaseModel):
 MAX_RECURRING_PRACTICE_SPAN_DAYS = 365
 
 class CreateRecurringPracticeInput(BaseModel):
-    days_of_week: list[int] = Field(..., min_length=1)  # 0=Mon..6=Sun
+    days_of_week: list[int] = Field(..., min_length=1)  # 0=Mon - 6=Sun
     start_date: dt.date
     end_date: dt.date
     start_time: dt.time
