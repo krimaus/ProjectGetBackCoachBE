@@ -59,6 +59,6 @@ async def check_user_role_in_team(session: AsyncSession, user_id: UUID, team_id:
     result = await session.execute(stmt)
     user_role = result.scalar_one_or_none()
     
-    if user_role.role is not None:
+    if user_role is not None and user_role.role is not None:
         return user_role.role
     return None

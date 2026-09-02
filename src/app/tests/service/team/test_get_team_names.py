@@ -2,7 +2,7 @@ import pytest
 import uuid
 
 from app.db_layer.orm_models.team import Team
-from src.app.service_layer.services.team.service import get_team_names
+from app.service_layer.services.team.service import get_team_names
 
 
 @pytest.mark.asyncio

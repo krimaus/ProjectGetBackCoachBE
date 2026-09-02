@@ -19,12 +19,14 @@ async def test_get_team_members_list(async_session):
     user3 = User(id=uuid.uuid4(), first_name="Aleksandra", last_name="Doba", username="ALEDOB", hashed_password="some_hash")
     
     async_session.add_all([user1, user2, user3])
+    await async_session.flush()
     
     user_role1 = UserRole(user_id=user1.id, team_id=team1.id, role=UserRoleEnum.OWNER)
     user_role2 = UserRole(user_id=user2.id, team_id=team1.id, role=UserRoleEnum.MEMBER)
     user_role3 = UserRole(user_id=user3.id, team_id=team1.id, role=UserRoleEnum.COACH)
     
     async_session.add_all([user_role1, user_role2, user_role3])
+    await async_session.flush()
     
     result = await get_team_members_service(session=async_session, team_id=team1.id)
     

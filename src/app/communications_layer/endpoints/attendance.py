@@ -30,10 +30,10 @@ async def get_team_attendance_grid(
             detail='Authentication failed'
         )
     if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,UserRoleEnum.COACH,UserRoleEnum.MEMBER) :
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Insufficient permissions",
-                )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
                 
     if time_from is None:
         time_from = time_from = dt.datetime.now(dt.timezone.utc)

@@ -1,3 +1,7 @@
+import pytest
+
+
+@pytest.mark.asyncio
 async def test_login_endpoint_success(client, persisted_user):
     user, plain_password = persisted_user
 
@@ -12,6 +16,7 @@ async def test_login_endpoint_success(client, persisted_user):
     assert "access_token" in body
 
 
+@pytest.mark.asyncio
 async def test_login_endpoint_invalid_credentials(client, persisted_user):
     user, _ = persisted_user
 

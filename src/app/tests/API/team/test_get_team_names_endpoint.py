@@ -7,7 +7,7 @@ from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 
 @pytest.mark.asyncio
 async def test_list_teams_endpoint_returns_sorted_list(authorized_client, async_session, mock_user_role):
-    mock_user_role(UserRoleEnum.OWNER)
+    mock_user_role(UserRoleEnum.OWNER, target="app.communications_layer.endpoints.team.check_user_role_in_team")
     
     team1 = Team(id=uuid.uuid4(), name="Zeta")
     team2 = Team(id=uuid.uuid4(), name="Alpha")

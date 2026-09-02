@@ -9,7 +9,7 @@ from app.db_layer.orm_models.user_role import UserRole
 
 @pytest.mark.asyncio
 async def test_get_team_members_list_endpoint(authorized_client, async_session, mock_user_role):
-    mock_user_role(UserRoleEnum.MEMBER)
+    mock_user_role(UserRoleEnum.MEMBER, target="app.communications_layer.endpoints.team.check_user_role_in_team")
     
     team1 = Team(id=uuid.uuid4(), name="Zeta")
     

@@ -161,12 +161,9 @@ async def authorized_client(client, test_user):
     
 @pytest.fixture
 def mock_user_role(monkeypatch):
-    def _apply(role: UserRoleEnum | None):
+    def _apply(role: UserRoleEnum | None, target: str):
         mock = AsyncMock(return_value=role)
-        monkeypatch.setattr(
-            "app.communications_layer.endpoints.practice.check_user_role_in_team",
-            mock,
-        )
+        monkeypatch.setattr(target, mock)
         return mock
     return _apply
 
