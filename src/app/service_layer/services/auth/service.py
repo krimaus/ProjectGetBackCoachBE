@@ -7,10 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.auth_util import encode_jwt, password_hash
-from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
-from src.app.db_layer.orm_models.user import User
-from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.auth import Token
+from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from app.db_layer.orm_models.user import User
+from app.db_layer.orm_models.user_role import UserRole
+from app.service_layer.pydantic_models.auth import Token
 
 async def authenticate_user(session: AsyncSession, username: str, password: str) -> Token:
     stmt = (

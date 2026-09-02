@@ -9,10 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.service_layer.pydantic_models import BulkPracticeItem, TeamPracticeListingItem
-from src.app.db_layer.orm_models.attendance import AttendanceEntry
-from src.app.db_layer.orm_models.practice import PracticeSeries
-from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, PracticeItem, UpdatePracticeInput
+from app.db_layer.orm_models.attendance import AttendanceEntry
+from app.db_layer.orm_models.practice import PracticeSeries
+from app.db_layer.orm_models.user_role import UserRole
+from app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, PracticeItem, UpdatePracticeInput
     
 async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
 

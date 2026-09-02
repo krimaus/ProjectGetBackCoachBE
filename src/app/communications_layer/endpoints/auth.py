@@ -5,9 +5,9 @@ from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.app.db import get_session
-from src.app.service_layer.pydantic_models.auth import Token
-from src.app.service_layer.services.auth.service import authenticate_user
+from app.db import get_session
+from app.service_layer.pydantic_models.auth import Token
+from app.service_layer.services.auth.service import authenticate_user
 
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])

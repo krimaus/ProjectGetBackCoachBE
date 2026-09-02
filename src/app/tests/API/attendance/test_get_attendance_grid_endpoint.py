@@ -5,10 +5,13 @@ from datetime import datetime, timezone
 from app.db_layer.orm_models.team import Team
 from app.db_layer.orm_models.practice import Practice
 from app.db_layer.orm_models.attendance import Attendance
+from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 
 
 @pytest.mark.asyncio
-async def test_get_attendance_grid(client, async_session):
+async def test_get_attendance_grid(authorized_client, async_session, mock_user_role):
+    mock_user_role(UserRoleEnum.OWNER)
+    
     team = Team(id=uuid.uuid4(), name="Alpha")
     async_session.add(team)
     await async_session.flush()
@@ -66,7 +69,7 @@ async def test_get_attendance_grid(client, async_session):
     ])
     await async_session.flush()
 
-    response = await client.get(
+    response = await authorized_client.get(
         f"/attendance/{team.id}/grid",
         params={
             "time_from": "2026-06-09T00:00:00Z",

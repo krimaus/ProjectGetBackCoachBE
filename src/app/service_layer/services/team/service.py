@@ -9,13 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, delete, or_, select
 
 from app.service_layer.pydantic_models import TeamItem
-from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
-from src.app.db_layer.orm_models.invite import Invite
-from src.app.db_layer.orm_models.user import User
-from src.app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.pydantic_models.enums.invite_status import InviteStatus
-from src.app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
-from src.app.service_layer.pydantic_models.team import DeleteInviteInput, InviteMembersInput, ChangeNameInput, ChangeRankInput, CreateTeamInput, DeleteMembersInput
+from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from app.db_layer.orm_models.invite import Invite
+from app.db_layer.orm_models.user import User
+from app.db_layer.orm_models.user_role import UserRole
+from app.service_layer.pydantic_models.enums.invite_status import InviteStatus
+from app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
+from app.service_layer.pydantic_models.team import DeleteInviteInput, InviteMembersInput, ChangeNameInput, ChangeRankInput, CreateTeamInput, DeleteMembersInput
 
 
 async def get_team_names(session: AsyncSession) -> list[TeamItem]:

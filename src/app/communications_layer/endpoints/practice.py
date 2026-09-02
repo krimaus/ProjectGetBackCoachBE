@@ -7,11 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.service_layer.services import get_team_practices
-from src.app.auth_util import user_dependency
-from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
-from src.app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, PracticeItem, TeamPracticeListingItem, UpdatePracticeInput, UpdateRecurringPracticeInput
-from src.app.service_layer.services.auth.service import check_user_role_in_team
-from src.app.service_layer.services.practice.service import create_practice_service, create_recurring_practice_service, delete_practice_series_service, delete_practice_service, get_practice_series_service, mark_actual_attendance_service, mark_planned_attendance_service, update_practice_service, update_recurring_practice_service
+from app.auth_util import user_dependency
+from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, PracticeItem, TeamPracticeListingItem, UpdatePracticeInput, UpdateRecurringPracticeInput
+from app.service_layer.services.auth.service import check_user_role_in_team
+from app.service_layer.services.practice.service import create_practice_service, create_recurring_practice_service, delete_practice_series_service, delete_practice_service, get_practice_series_service, mark_actual_attendance_service, mark_planned_attendance_service, update_practice_service, update_recurring_practice_service
 
 practice_router = APIRouter(prefix="/practice", tags=["practice"])
 

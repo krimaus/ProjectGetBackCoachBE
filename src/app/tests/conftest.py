@@ -14,8 +14,11 @@ from app.db import get_session
 import psycopg2
 from psycopg2 import sql
 
-from src.app.auth_util import get_current_user
-from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from app.auth_util import get_current_user
+from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from app.db_layer.orm_models.user import User
+from app.auth_util import password_hash
+
 
 TEST_DB_NAME = os.getenv("TEST_DB_NAME")
 TEST_DB_USER = os.getenv("TEST_DB_USER")
@@ -166,3 +169,18 @@ def mock_user_role(monkeypatch):
         )
         return mock
     return _apply
+
+
+@pytest.fixture
+async def persisted_user(async_session):
+    plain_password = "correct-horse-battery-staple"
+    user = User(
+        id=uuid.uuid4(),
+        first_name="Test",
+        last_name="User",
+        username="testuser",
+        hashed_password=password_hash.hash(plain_password),
+    )
+    async_session.add(user)
+    await async_session.flush()
+    return user, plain_password

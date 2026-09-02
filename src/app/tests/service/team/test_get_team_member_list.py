@@ -5,7 +5,7 @@ from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from app.db_layer.orm_models.team import Team
 from app.db_layer.orm_models.user import User
 from app.db_layer.orm_models.user_role import UserRole
-from src.app.service_layer.services.user.service import get_team_members_service
+from app.service_layer.services.user.service import get_team_members_service
 
 
 @pytest.mark.asyncio
@@ -14,13 +14,13 @@ async def test_get_team_members_list(async_session):
     
     async_session.add(team1)
     
-    user1 = User(id=uuid.uuid4(), first_name="Adam", last_name="Kowalski", username="ADAKOW")
-    user2 = User(id=uuid.uuid4(), first_name="Jan", last_name="Lewandowski", username="JANLEW")
-    user3 = User(id=uuid.uuid4(), first_name="Aleksandra", last_name="Doba", username="ALEDOB")
+    user1 = User(id=uuid.uuid4(), first_name="Adam", last_name="Kowalski", username="ADAKOW", hashed_password="some_hash")
+    user2 = User(id=uuid.uuid4(), first_name="Jan", last_name="Lewandowski", username="JANLEW", hashed_password="some_hash")
+    user3 = User(id=uuid.uuid4(), first_name="Aleksandra", last_name="Doba", username="ALEDOB", hashed_password="some_hash")
     
     async_session.add_all([user1, user2, user3])
     
-    user_role1 = UserRole(user_id=user1.id, team_id=team1.id, role=UserRoleEnum.ADMIN)
+    user_role1 = UserRole(user_id=user1.id, team_id=team1.id, role=UserRoleEnum.OWNER)
     user_role2 = UserRole(user_id=user2.id, team_id=team1.id, role=UserRoleEnum.MEMBER)
     user_role3 = UserRole(user_id=user3.id, team_id=team1.id, role=UserRoleEnum.COACH)
     

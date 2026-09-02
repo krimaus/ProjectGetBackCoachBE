@@ -10,13 +10,13 @@ from app.db_layer.orm_models.user_role import UserRole
 from app.service_layer.pydantic_models import UserItem
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
-from src.app.db_layer.orm_models.invite import Invite
-from src.app.service_layer.pydantic_models.enums.invite_status import InviteStatus
-from src.app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
-from src.app.service_layer.pydantic_models.user import CreateUserInput, UpdateUserInput
+from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from app.db_layer.orm_models.invite import Invite
+from app.service_layer.pydantic_models.enums.invite_status import InviteStatus
+from app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
+from app.service_layer.pydantic_models.user import CreateUserInput, UpdateUserInput
 from app.auth_util import password_hash
-from src.app.service_layer.pydantic_models.user_role import UserRoleItem
+from app.service_layer.pydantic_models.user_role import UserRoleItem
 
 
 async def create_user_service(session: AsyncSession, payload: CreateUserInput) -> UserItem:

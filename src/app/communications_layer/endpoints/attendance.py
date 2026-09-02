@@ -7,7 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.service_layer.services import get_attendance_grid
-from src.app.auth_util import user_dependency
+from app.auth_util import user_dependency
+from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from app.service_layer.services.auth.service import check_user_role_in_team
 
 attendance_router = APIRouter(prefix="/attendance", tags=["attendance"])
 
@@ -27,6 +29,12 @@ async def get_team_attendance_grid(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
+    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,UserRoleEnum.COACH,UserRoleEnum.MEMBER) :
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Insufficient permissions",
+                )
+                
     if time_from is None:
         time_from = time_from = dt.datetime.now(dt.timezone.utc)
     if time_to is None:

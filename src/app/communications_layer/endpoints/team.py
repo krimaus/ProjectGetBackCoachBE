@@ -8,13 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
 from app.service_layer.pydantic_models.team import DeleteInviteInput, InviteMembersInput, ChangeNameInput, ChangeRankInput, CreateTeamInput, DeleteMembersInput, TeamItem
 from app.service_layer.services import get_team_names
-from src.app.auth_util import user_dependency
-from src.app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
-from src.app.service_layer.pydantic_models.enums.invite_status import InviteStatus
-from src.app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
-from src.app.service_layer.services.auth.service import check_user_role_in_team
-from src.app.service_layer.services.team.service import delete_invite_service, get_team_invites_service, resolve_join_request_service, invite_team_members_service, change_member_rank_service, change_team_ownership_service, rename_team_service, create_team_service, delete_team_service, remove_team_members_service, search_team_by_name_service
-from src.app.service_layer.services.user.service import get_team_members_service
+from app.auth_util import user_dependency
+from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
+from app.service_layer.pydantic_models.enums.invite_status import InviteStatus
+from app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
+from app.service_layer.services.auth.service import check_user_role_in_team
+from app.service_layer.services.team.service import delete_invite_service, get_team_invites_service, resolve_join_request_service, invite_team_members_service, change_member_rank_service, change_team_ownership_service, rename_team_service, create_team_service, delete_team_service, remove_team_members_service, search_team_by_name_service
+from app.service_layer.services.user.service import get_team_members_service
 
 
 teams_router = APIRouter(prefix="/teams", tags=["teams"])

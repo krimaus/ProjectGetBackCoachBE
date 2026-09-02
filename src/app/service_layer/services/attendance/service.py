@@ -7,7 +7,7 @@ from app.db_layer.orm_models import Practice
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.service_layer.pydantic_models import AttendanceItem, AttendanceListingItem
-from src.app.db_layer.orm_models.attendance import AttendanceEntry
+from app.db_layer.orm_models.attendance import AttendanceEntry
 
 
 async def get_attendance_grid(
