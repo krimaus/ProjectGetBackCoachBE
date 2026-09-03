@@ -3,9 +3,7 @@ from unittest.mock import AsyncMock
 import uuid
 from httpx import ASGITransport
 import pytest
-from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
 from app.db_layer.orm_models.common.base import Base
