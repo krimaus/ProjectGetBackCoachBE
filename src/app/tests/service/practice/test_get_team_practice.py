@@ -4,7 +4,7 @@ import pytest
 
 from app.db_layer.orm_models.practice import Practice
 from app.db_layer.orm_models.team import Team
-from app.service_layer.services.practice.service import get_team_practices
+from app.service_layer.services.practice.service import get_team_practice_service
 
 
 @pytest.mark.asyncio
@@ -42,8 +42,9 @@ async def test_get_team_practices(async_session):
     
     async_session.add_all([practice1, practice2, practice3])
     
-    result = await get_team_practices(
-        session=async_session, team_id=team1.id, 
+    result = await get_team_practice_service(
+        session=async_session,
+        team_id=team1.id, 
         time_from=datetime(2026, 3, 11, 13, 30, 0, tzinfo=timezone.utc), 
         time_to=datetime(2026, 3, 12, 17, 30, 0, tzinfo=timezone.utc)
     )

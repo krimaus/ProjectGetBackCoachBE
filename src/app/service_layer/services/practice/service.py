@@ -14,7 +14,7 @@ from app.db_layer.orm_models.practice import PracticeSeries
 from app.db_layer.orm_models.user_role import UserRole
 from app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, PracticeItem, UpdatePracticeInput
     
-async def get_team_practices(session: AsyncSession, team_id: UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
+async def get_team_practice_service(session: AsyncSession, team_id: UUID, time_from: dt.datetime, time_to: dt.datetime) -> list[TeamPracticeListingItem]:
 
     stmt = (
         select(Practice)
@@ -73,6 +73,7 @@ async def create_practice_service(
     await session.commit()
     await session.refresh(practice)
     return PracticeItem(
+        id=practice.id,
         team_id=practice.team_id,
         start_time=practice.start_time,
         end_time=practice.end_time,
@@ -194,7 +195,7 @@ async def mark_actual_attendance_service(
 
 async def create_recurring_practice_service(
     session: AsyncSession, team_id: UUID, payload: CreateRecurringPracticeInput
-) -> list[Practice]:
+) -> list[PracticeItem]:
     series = PracticeSeries(
         team_id=team_id,
         start_date=payload.start_date,
@@ -246,7 +247,18 @@ async def create_recurring_practice_service(
     await session.commit()
     for p in practices:
         await session.refresh(p)
-    return practices
+    return [
+        PracticeItem(
+            id=p.id,
+            team_id=p.team_id,
+            start_time=p.start_time,
+            end_time=p.end_time,
+            location=p.location,
+            description=p.description,
+            series_id=p.series_id,
+        )
+        for p in practices
+    ]
 
 
 

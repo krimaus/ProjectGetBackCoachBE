@@ -1,16 +1,15 @@
-from uuid import UUID
-
 from pydantic import UUID4, AwareDatetime, BaseModel, Field, field_validator, model_validator
 import datetime as dt
 
 
 class PracticeItem(BaseModel):
-    team_id: UUID
+    id: UUID4
+    team_id: UUID4
     start_time: dt.datetime
     end_time: dt.datetime
     location: str
     description: str | None
-    series_id: UUID | None
+    series_id: UUID4 | None
         
 class BulkPracticeItem(BaseModel):
     id: UUID4

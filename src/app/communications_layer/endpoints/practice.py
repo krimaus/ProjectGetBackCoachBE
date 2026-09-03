@@ -6,7 +6,7 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
-from app.service_layer.services import get_team_practices
+from app.service_layer.services import get_team_practice_service
 from app.auth_util import user_dependency
 from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from app.service_layer.pydantic_models.practice import CreatePracticeInput, CreateRecurringPracticeInput, MarkActualAttendanceInput, PracticeItem, TeamPracticeListingItem, UpdatePracticeInput, UpdateRecurringPracticeInput
@@ -41,7 +41,7 @@ async def get_team_practice(
     if time_to is None:
         time_to = time_from + dt.timedelta(days=7)
         
-    return await get_team_practices(session, team_id, time_from, time_to)
+    return await get_team_practice_service(session, team_id, time_from, time_to)
 
 
 @practice_router.get(
@@ -100,13 +100,13 @@ async def create_recurring_practice(
     payload: CreateRecurringPracticeInput,
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
-):
+) -> list[PracticeItem]:
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",
         )
-    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,):
+    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER, UserRoleEnum.COACH):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient permissions",

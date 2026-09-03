@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 import os
 from unittest.mock import AsyncMock
 import uuid
@@ -179,3 +180,12 @@ async def persisted_user(async_session):
     async_session.add(user)
     await async_session.flush()
     return user, plain_password
+
+
+@pytest.fixture
+def future_window():
+    def _make(days_ahead: int = 7, duration_hours: int = 2) -> tuple[datetime, datetime]:
+        start = datetime.now(timezone.utc) + timedelta(days=days_ahead)
+        end = start + timedelta(hours=duration_hours)
+        return start, end
+    return _make
