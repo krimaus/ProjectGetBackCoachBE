@@ -125,7 +125,7 @@ async def update_recurring_practice(
     payload: UpdateRecurringPracticeInput,
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
-):
+) -> list[PracticeItem]:
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -150,7 +150,7 @@ async def update_practice(
     payload: UpdatePracticeInput,
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
-):
+) -> PracticeItem:
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -162,7 +162,7 @@ async def update_practice(
             detail='Insufficient permissions'
         )
     
-    return await update_practice_service(session, practice_id, payload)
+    return await update_practice_service(session, practice_id, team_id, payload)
 
 
 @practice_router.patch(
@@ -232,14 +232,14 @@ async def delete_practice(
 
 @practice_router.delete(
     "/{team_id}/recurring/{series_id}",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_recurring_practice(
     team_id: UUID,
     series_id: UUID,
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
-):
+) -> None:
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

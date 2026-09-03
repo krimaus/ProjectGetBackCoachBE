@@ -83,11 +83,14 @@ async def create_practice_service(
     )
 
 
-async def update_practice_service(session: AsyncSession, practice_id: UUID, payload: UpdatePracticeInput):
-    stmt = select(Practice).where(Practice.id == practice_id)
+async def update_practice_service(session: AsyncSession, practice_id: UUID, team_id: UUID, payload: UpdatePracticeInput) -> PracticeItem:
+    stmt = select(Practice).where(Practice.id == practice_id, Practice.team_id == team_id)
     
     result = await session.execute(stmt)
     practice = result.scalar_one_or_none()
+    
+    if practice is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Practice not found")
     
     practice.start_time = payload.start_time
     practice.end_time = payload.end_time
@@ -97,7 +100,15 @@ async def update_practice_service(session: AsyncSession, practice_id: UUID, payl
     await session.commit()
     await session.refresh(practice)
 
-    return practice
+    return PracticeItem(
+        id=practice.id,
+        team_id=practice.team_id,
+        start_time=practice.start_time,
+        end_time=practice.end_time,
+        location=practice.location,
+        description=practice.description,
+        series_id=practice.series_id
+    )
 
 
 async def delete_practice_service(session: AsyncSession, team_id: UUID, practice_id: UUID) -> None:
@@ -108,7 +119,6 @@ async def delete_practice_service(session: AsyncSession, team_id: UUID, practice
     result = await session.execute(stmt)
 
     if result.rowcount == 0:
-        await session.rollback()
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Practice not found")
 
     await session.commit()
@@ -264,7 +274,7 @@ async def create_recurring_practice_service(
 
 async def update_recurring_practice_service(
     session: AsyncSession, team_id: UUID, series_id: UUID, payload: CreateRecurringPracticeInput
-) -> list[Practice]:
+) -> list[PracticeItem]:
     stmt = select(PracticeSeries).where(PracticeSeries.id == series_id, PracticeSeries.team_id == team_id)
     
     result = await session.execute(stmt)
@@ -339,7 +349,18 @@ async def update_recurring_practice_service(
     await session.commit()
     for p in practices:
         await session.refresh(p)
-    return practices
+    return [
+        PracticeItem(
+            id=p.id,
+            team_id=p.team_id,
+            start_time=p.start_time,
+            end_time=p.end_time,
+            location=p.location,
+            description=p.description,
+            series_id=p.series_id,
+        ) 
+        for p in practices
+    ]
 
 
 async def delete_practice_series_service(

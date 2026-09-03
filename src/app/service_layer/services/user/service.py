@@ -31,12 +31,12 @@ async def create_user_service(session: AsyncSession, payload: CreateUserInput) -
 
     try:
         await session.commit()
-        await session.refresh(user) # read all DB generated fields
+        await session.refresh(user)
     except IntegrityError:
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Username already exists.",
+            detail="Username already exists",
         )
 
     return UserItem(
