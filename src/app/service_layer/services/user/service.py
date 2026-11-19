@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db_layer.orm_models.enums.user_role_enum import UserRoleEnum
 from app.db_layer.orm_models.invite import Invite
 from app.service_layer.pydantic_models.enums.invite_status import InviteStatus
-from app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
+from app.service_layer.pydantic_models.enums.membership_application import MembershipRequestDecisionEnum
 from app.service_layer.pydantic_models.user import CreateUserInput, UpdateUserInput
 from app.auth_util import password_hash
 from app.service_layer.pydantic_models.user_role import UserRoleItem
@@ -191,7 +191,7 @@ async def search_user_by_name_service(session: AsyncSession, name_query: str) ->
     ]
     
     
-async def request_join_team_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID):
+async def request_team_membership_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID):
     stmt = select(UserRole.user_id).where(
         UserRole.team_id == team_id,
         UserRole.user_id == user_id,
@@ -228,7 +228,7 @@ async def request_join_team_service(session: AsyncSession, team_id: uuid.UUID, u
     await session.commit()
     
     
-async def resolve_team_invite_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID, decision: MembershipApplicationDecisionEnum):
+async def resolve_team_membership_request_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID, decision: MembershipRequestDecisionEnum):
     stmt = select(UserRole.user_id).where(
         UserRole.team_id == team_id,
         UserRole.user_id == user_id,
@@ -256,7 +256,7 @@ async def resolve_team_invite_service(session: AsyncSession, team_id: uuid.UUID,
             detail=f"Invite not found"
         )
         
-    if decision == MembershipApplicationDecisionEnum.ACCEPT:
+    if decision == MembershipRequestDecisionEnum.ACCEPT:
         invite.player_consent = True
             
         new_role = UserRole(
@@ -275,7 +275,7 @@ async def resolve_team_invite_service(session: AsyncSession, team_id: uuid.UUID,
         return None
     
     
-async def delete_join_request_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID):
+async def delete_team_membership_request_service(session: AsyncSession, team_id: uuid.UUID, user_id: uuid.UUID):
     stmt = select(Invite).where(
         Invite.team_id == team_id,
         Invite.user_id == user_id,
@@ -301,7 +301,7 @@ async def delete_join_request_service(session: AsyncSession, team_id: uuid.UUID,
     await session.execute(stmt)
         
         
-async def get_user_invites_service(session: AsyncSession, user_id: uuid.UUID, invite_status: InviteStatus):
+async def get_user_membership_requests_service(session: AsyncSession, user_id: uuid.UUID, invite_status: InviteStatus):
     stmt = select(Invite).where(
         Invite.user_id == user_id,
     )

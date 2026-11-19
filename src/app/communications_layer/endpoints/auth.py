@@ -2,7 +2,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
@@ -21,4 +20,6 @@ async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: AsyncSession = Depends(get_session)
 ):
-    return await authenticate_user(session, form_data.username, form_data.password)
+    return await authenticate_user(
+        session, form_data.username, form_data.password
+    )

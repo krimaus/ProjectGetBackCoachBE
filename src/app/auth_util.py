@@ -18,9 +18,15 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 async def encode_jwt(encode: dict) -> str:
     return jwt.encode(encode, os.getenv('SECRET_KEY'), algorithm=os.getenv('ALGORITHM'))
     
-async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]) -> dict:
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_bearer)]
+) -> dict:
     try:
-        payload = jwt.decode(token, os.getenv('SECRET_KEY'), algorithms=[os.getenv('ALGORITHM')])
+        payload = jwt.decode(
+            token,
+            os.getenv('SECRET_KEY'),
+            algorithms=[os.getenv('ALGORITHM')]
+        )
         username: str = payload.get('sub')
         raw_id = payload.get('id')
 
@@ -40,9 +46,15 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]) -> dic
 
         return {'username': username, 'id': user_id}
     except ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail='Token expired')
+        raise HTTPException(
+            status_code=401, 
+            detail='Token expired'
+        )
     except JWTError as e:
         print("JWT decode failed:", repr(e))
-        raise HTTPException(status_code=401, detail='Could not validate credentials')
+        raise HTTPException(
+            status_code=401,
+            detail='Could not validate credentials'
+        )
         
 user_dependency = Annotated[dict, Depends(get_current_user)]

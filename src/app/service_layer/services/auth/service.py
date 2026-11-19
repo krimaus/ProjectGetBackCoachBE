@@ -12,7 +12,11 @@ from app.db_layer.orm_models.user import User
 from app.db_layer.orm_models.user_role import UserRole
 from app.service_layer.pydantic_models.auth import Token
 
-async def authenticate_user(session: AsyncSession, username: str, password: str) -> Token:
+async def authenticate_user(
+    session: AsyncSession, 
+    username: str, 
+    password: str
+) -> Token:
     stmt = (
         select(User).where(User.username == username)
     )

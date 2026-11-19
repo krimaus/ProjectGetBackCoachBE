@@ -31,7 +31,15 @@ async def get_team_practice(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    if await check_user_role_in_team(session, user["id"], team_id) not in (UserRoleEnum.OWNER,UserRoleEnum.COACH,UserRoleEnum.MEMBER) :
+    if await check_user_role_in_team(
+        session, 
+        user["id"], 
+        team_id
+    ) not in (
+        UserRoleEnum.OWNER,
+        UserRoleEnum.COACH,
+        UserRoleEnum.MEMBER
+    ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",

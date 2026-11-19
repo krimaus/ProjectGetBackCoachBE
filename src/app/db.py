@@ -10,14 +10,11 @@ db_string = f"{os.getenv('SQLALCHEMY_DB_TYPE')}://{os.getenv('POSTGRES_USER')}:{
 engine = create_async_engine(
     db_string,
     echo=True,
-    future=True
 )
 
 session_maker = async_sessionmaker(
     bind=engine,
-    class_=AsyncSession,
     expire_on_commit=False,
-    autocommit=False
 )
 
 async def get_session() -> AsyncSession:

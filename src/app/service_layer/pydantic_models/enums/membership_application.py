@@ -1,6 +1,6 @@
 from enum import StrEnum
 
 
-class MembershipApplicationDecisionEnum(StrEnum):
+class MembershipRequestDecisionEnum(StrEnum):
     ACCEPT = "ACCEPT"
     REJECT = "REJECT"

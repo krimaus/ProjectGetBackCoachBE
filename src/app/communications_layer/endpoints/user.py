@@ -9,11 +9,11 @@ from app.db import get_session
 from app.service_layer.services import create_user_service
 from app.service_layer.pydantic_models import UserItem
 from app.service_layer.pydantic_models.enums.invite_status import InviteStatus
-from app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
+from app.service_layer.pydantic_models.enums.membership_application import MembershipRequestDecisionEnum
 from app.service_layer.pydantic_models.user import CreateUserInput, UpdateUserInput
 from app.auth_util import user_dependency
 from app.service_layer.pydantic_models.user_role import UserRoleItem
-from app.service_layer.services.user.service import delete_join_request_service, get_user_invites_service, leave_team_service, resolve_team_invite_service, delete_user_service, get_user_by_name_service, get_user_roles_service, get_user_by_id_service, request_join_team_service, search_user_by_name_service, update_user_service
+from app.service_layer.services.user.service import delete_team_membership_request_service, get_user_membership_requests_service, leave_team_service, resolve_team_membership_request_service, delete_user_service, get_user_by_name_service, get_user_roles_service, get_user_by_id_service, request_team_membership_service, search_user_by_name_service, update_user_service
 
 users_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -35,20 +35,20 @@ async def get_current_user(
 
 
 @users_router.get(
-    "/{name}",
+    "/membership/requests",
     status_code=status.HTTP_200_OK
 )
-async def get_user_by_name(
-    name: str,
+async def get_user_membership_requests(
+    invite_status: InviteStatus,
     user: user_dependency,
     session: AsyncSession = Depends(get_session),
-) -> UserItem:
+):
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    return await get_user_by_name_service(session, name)
+    return await get_user_membership_requests_service(session, user['id'], invite_status)
 
 
 @users_router.get(
@@ -86,6 +86,23 @@ async def get_user_by_id(
     return await get_user_by_id_service(session, user_id)
 
 
+# @users_router.get(
+#     "/{name}",
+#     status_code=status.HTTP_200_OK
+# )
+# async def get_user_by_name(
+#     name: str,
+#     user: user_dependency,
+#     session: AsyncSession = Depends(get_session),
+# ) -> UserItem:
+#     if user is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail='Authentication failed'
+#         )
+#     return await get_user_by_name_service(session, name)
+
+
 @users_router.get(
     "/{user_id}/roles",
     status_code=status.HTTP_200_OK
@@ -104,25 +121,9 @@ async def get_user_roles(
     return await get_user_roles_service(session, user_id)
 
 
-@users_router.get(
-    "/invites",
-    status_code=status.HTTP_200_OK
-)
-async def get_user_invites(
-    invite_status: InviteStatus,
-    user: user_dependency,
-    session: AsyncSession = Depends(get_session),
-):
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Authentication failed'
-        )
-    return await get_user_invites_service(session, user['id'], invite_status)
-
 
 @users_router.post(
-    "/",
+    "",
     status_code=status.HTTP_201_CREATED,
     response_model=UserItem,
 )
@@ -134,10 +135,10 @@ async def create_user(
 
 
 @users_router.post(
-    "/{team_id}/join",
+    "/{team_id}/membership/request",
     status_code=status.HTTP_201_CREATED,
 )
-async def request_join_team(
+async def request_team_membership(
     team_id: UUID,
     user: user_dependency,
     session: AsyncSession = Depends(get_session)
@@ -147,17 +148,17 @@ async def request_join_team(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Authentication failed'
         )
-    await request_join_team_service(session, team_id, user['id'])
+    await request_team_membership_service(session, team_id, user['id'])
 
 
 @users_router.patch(
-    "/{team_id}/invite/resolve",
+    "/{team_id}/membership/request/resolve",
     status_code=status.HTTP_200_OK
 )
-async def resolve_team_invite(
+async def resolve_team_membership_request(
     team_id: UUID,
     user: user_dependency,
-    decision: MembershipApplicationDecisionEnum,
+    decision: MembershipRequestDecisionEnum,
     session: AsyncSession = Depends(get_session)
 ):
     if user is None:
@@ -166,12 +167,12 @@ async def resolve_team_invite(
             detail='Authentication failed'
         )
     
-    return await resolve_team_invite_service(session, team_id, user['id'], decision)
+    return await resolve_team_membership_request_service(session, team_id, user['id'], decision)
     
 
 
 @users_router.patch(
-    "/",
+    "",
     status_code=status.HTTP_200_OK
 )
 async def update_user(
@@ -189,7 +190,7 @@ async def update_user(
 
 
 @users_router.delete(
-    "/",
+    "",
     status_code=status.HTTP_200_OK
 )
 async def delete_user(
@@ -206,10 +207,10 @@ async def delete_user(
     
     
 @users_router.delete(
-    "/{team_id}/invite",
+    "/{team_id}/membership/request",
     status_code=status.HTTP_200_OK
 )
-async def delete_join_request(
+async def delete_team_membership_request(
     team_id: UUID,
     user: user_dependency,
     session: AsyncSession = Depends(get_session)
@@ -220,7 +221,7 @@ async def delete_join_request(
             detail='Authentication failed'
         )
     
-    await delete_join_request_service(session, team_id, user['id'])
+    await delete_team_membership_request_service(session, team_id, user['id'])
     
     
 @users_router.delete(

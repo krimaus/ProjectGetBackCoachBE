@@ -14,7 +14,7 @@ from app.db_layer.orm_models.invite import Invite
 from app.db_layer.orm_models.user import User
 from app.db_layer.orm_models.user_role import UserRole
 from app.service_layer.pydantic_models.enums.invite_status import InviteStatus
-from app.service_layer.pydantic_models.enums.membership_application import MembershipApplicationDecisionEnum
+from app.service_layer.pydantic_models.enums.membership_application import MembershipRequestDecisionEnum
 from app.service_layer.pydantic_models.team import DeleteInviteInput, InviteMembersInput, ChangeNameInput, ChangeRankInput, CreateTeamInput, DeleteMembersInput
 
 
@@ -58,7 +58,7 @@ async def create_team_service(session: AsyncSession, user: dict, payload: Create
         name=team.name
     )
     
-async def invite_team_members_service(session: AsyncSession, team_id: UUID, payload: InviteMembersInput) -> list[UUID]:
+async def request_team_membership_service(session: AsyncSession, team_id: UUID, payload: InviteMembersInput) -> list[UUID]:
     requested_ids = set(payload.id_list)
 
     stmt = select(User.id).where(User.id.in_(requested_ids))
@@ -249,7 +249,7 @@ async def search_team_by_name_service(session: AsyncSession, name_query: str) ->
     ]
     
     
-async def resolve_join_request_service(session: AsyncSession, team_id: UUID, user_id: UUID, decision: MembershipApplicationDecisionEnum):
+async def resolve_user_membership_request_service(session: AsyncSession, team_id: UUID, user_id: UUID, decision: MembershipRequestDecisionEnum):
     stmt = select(UserRole.user_id).where(
         UserRole.team_id == team_id,
         UserRole.user_id == user_id,
@@ -277,7 +277,7 @@ async def resolve_join_request_service(session: AsyncSession, team_id: UUID, use
             detail=f"Invite not found"
         )
         
-    if decision == MembershipApplicationDecisionEnum.ACCEPT:
+    if decision == MembershipRequestDecisionEnum.ACCEPT:
         invite.team_consent = True
         
         new_role = UserRole(
@@ -296,7 +296,7 @@ async def resolve_join_request_service(session: AsyncSession, team_id: UUID, use
         return None
     
     
-async def delete_invite_service(session: AsyncSession, team_id: UUID, payload: DeleteInviteInput):
+async def delete_membership_request_service(session: AsyncSession, team_id: UUID, payload: DeleteInviteInput):
     stmt = select(Invite).where(
         Invite.team_id == team_id,
         Invite.user_id.in_(payload.id_list),
@@ -325,7 +325,7 @@ async def delete_invite_service(session: AsyncSession, team_id: UUID, payload: D
     await session.execute(stmt)
     
     
-async def get_team_invites_service(session: AsyncSession, team_id: UUID, invite_status: InviteStatus):
+async def get_team_membership_requests_service(session: AsyncSession, team_id: UUID, invite_status: InviteStatus):
     stmt = select(Invite).where(
         Invite.team_id == team_id,
     )

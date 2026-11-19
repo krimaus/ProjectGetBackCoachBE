@@ -13,12 +13,17 @@ class Practice(IdBearer, Base):
     team_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("team.id", ondelete="CASCADE")
     )
-    start_time: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True))
-    end_time: Mapped[dt.datetime] = mapped_column(TIMESTAMP(timezone=True))
+    start_time: Mapped[dt.datetime] = mapped_column(
+        TIMESTAMP(timezone=True)
+    )
+    end_time: Mapped[dt.datetime] = mapped_column(
+        TIMESTAMP(timezone=True)
+    )
     location: Mapped[str]
     description: Mapped[str | None] = mapped_column(nullable=True)
     series_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("practice_series.id", ondelete="CASCADE"), nullable=True
+        ForeignKey("practice_series.id", ondelete="CASCADE"),
+        nullable=True
     )
 
 
